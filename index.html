@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buku Angkatan Ksatiara 12</title>
+    <style>
+        body {
+            background: #e9ecef;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        .title-container { text-align: center; margin-bottom: 20px; }
+        .title-container h1 { color: #2c3e50; margin-bottom: 5px; }
+        .title-container p { color: #7f8c8d; font-style: italic; }
+        
+        #loading { font-size: 18px; font-weight: bold; color: #555; margin-top: 20px; }
+        
+        #start-btn {
+            padding: 15px 30px; font-size: 18px; font-weight: bold; cursor: pointer;
+            background-color: #34495e; color: white; border: none; border-radius: 8px; display: none;
+            transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #start-btn:hover { background-color: #2c3e50; transform: translateY(-2px); }
+        
+        #book-wrapper { display: none; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .page { background-color: white; border: 1px solid #ddd; }
+        canvas { width: 100%; height: 100%; object-fit: contain; }
+        
+        .controls { display: none; margin-top: 25px; gap: 15px; }
+        .controls button { 
+            padding: 10px 20px; border: none; border-radius: 5px; 
+            background: #2980b9; color: white; cursor: pointer; font-weight: bold;
+            transition: 0.2s;
+        }
+        .controls button:hover { background: #2471a3; }
+        #music-btn { background: #e67e22; }
+        #music-btn:hover { background: #d35400; }
+    </style>
+</head>
+<body>
+
+    <div class="title-container" id="main-title">
+        <h1>Buku Angkatan Ksatiara 12</h1>
+        <p>Selamat datang di mesin waktu kita!</p>
+    </div>
+
+    <div id="loading">Memuat Mesin Waktu (PDF)... ⏳ Mohon tunggu sebentar.</div>
+    
+    <!-- Tombol ini berfungsi mem-bypass blokir autoplay audio pada browser -->
+    <button id="start-btn">📖 Buka Buku & Putar Lagu Kenangan</button>
+
+    <div id="book-wrapper">
+        <div id="flipbook"></div>
+    </div>
+
+    <div class="controls" id="controls">
+        <button id="prev-btn">⬅️ Halaman Sebelumnya</button>
+        <button id="next-btn">Halaman Selanjutnya ➡️</button>
+        <button id="music-btn">⏸️ Pause Musik</button>
+    </div>
+
+    <!-- Audio Player -->
+    <audio id="bg-music" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Import PDF.js dan PageFlip.js melalui CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Konfigurasi Worker PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+            const pdfUrl = 'bukang_compressed.pdf'; 
+
+            const loadingDiv = document.getElementById('loading');
+            const startBtn = document.getElementById('start-btn');
+            const flipbookEl = document.getElementById('flipbook');
+            const bookWrapper = document.getElementById('book-wrapper');
+            const controls = document.getElementById('controls');
+            const bgMusic = document.getElementById('bg-music');
+            const mainTitle = document.getElementById('main-title');
+
+            try {
+                // Proses Membaca PDF
+                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                const totalPages = pdf.numPages;
+
+                // Ekstrak setiap halaman menjadi elemen <canvas> HTML
+                for (let i = 1; i <= totalPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5 }); // Skala 1.5 agar teks tidak pecah
+
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'page';
+                    pageDiv.appendChild(canvas);
+                    flipbookEl.appendChild(pageDiv);
+                }
+
+                // Setelah berhasil di-render, sembunyikan tulisan loading
+                loadingDiv.style.display = 'none';
+                startBtn.style.display = 'inline-block';
+
+                // Setup Library PageFlip
+                const pageFlip = new St.PageFlip(flipbookEl, {
+                    width: 450, // Lebar dasar satu halaman
+                    height: 636, // Tinggi dasar (aspek rasio A4/Buku)
+                    size: "stretch",
+                    minWidth: 315,
+                    maxWidth: 1000,
+                    minHeight: 420,
+                    maxHeight: 1350,
+                    showCover: true, // Menjadikan halaman 1 sebagai Cover Keras
+                    mobileScrollSupport: false // Mencegah bentrok dengan scroll HP
+                });
+
+                // Interaksi klik mulai
+                startBtn.addEventListener('click', () => {
+                    startBtn.style.display = 'none';
+                    mainTitle.style.display = 'none';
+                    
+                    bookWrapper.style.display = 'block';
+                    controls.style.display = 'flex';
+
+                    // Masukkan halaman yang sudah dirender ke dalam flipbook
+                    pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+                    // Memulai musik
+                    bgMusic.play();
+                });
+
+                // Fungsionalitas Tombol Bawah
+                document.getElementById('prev-btn').addEventListener('click', () => pageFlip.flipPrev());
+                document.getElementById('next-btn').addEventListener('click', () => pageFlip.flipNext());
+                
+                document.getElementById('music-btn').addEventListener('click', (e) => {
+                    if (bgMusic.paused) { 
+                        bgMusic.play(); 
+                        e.target.innerText = '⏸️ Pause Musik';
+                    } else { 
+                        bgMusic.pause(); 
+                        e.target.innerText = '▶️ Putar Musik';
+                    }
+                });
+
+            } catch (error) {
+                loadingDiv.innerText = '❌ Gagal memuat buku PDF. Pastikan nama file "bukang_compressed.pdf" sudah benar dan berada di folder yang sama.';
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
