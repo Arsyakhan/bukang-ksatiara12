@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Meta Tags Web App (Agar terasa seperti aplikasi native) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Meta Tags diperbarui agar mengizinkan cubit/pinch-to-zoom dari pengguna HP -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,12 +24,12 @@
             min-height: 100vh; margin: 0; padding: 5vh 0; 
             font-family: 'Nunito', sans-serif;
             overflow-y: auto; 
-            overflow-x: hidden;
+            overflow-x: auto; /* Diperbarui agar bisa digeser horizontal saat sedang di-zoom */
             color: #2c3e50;
-            overscroll-behavior-y: contain; /* Mencegah efek pull-to-refresh di HP */
+            overscroll-behavior-y: contain;
         }
         
-        /* --- TAMPILAN AWAL (WELCOME SCREEN TANPA TEKS) --- */
+        /* --- TAMPILAN AWAL (WELCOME SCREEN) --- */
         #welcome-screen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 80vh; 
@@ -79,7 +79,7 @@
         /* --- BUKU --- */
         #book-wrapper { 
             display: none; margin-top: 10px; width: 95vw; max-width: 1000px; 
-            transition: max-width 0.4s ease-in-out;
+            transition: transform 0.4s ease, max-width 0.4s ease-in-out;
             box-shadow: 0 15px 35px rgba(0,0,0,0.15); 
             border-radius: 5px;
         }
@@ -138,44 +138,47 @@
         }
         #page-slider::-webkit-slider-thumb:hover { transform: scale(1.3); background: #f39c12; }
 
-        .tools-row { display: flex; gap: 15px; justify-content: center; align-items: center; width: 100%; }
+        .tools-row { display: flex; gap: 10px; justify-content: center; align-items: center; width: 100%; flex-wrap: wrap; }
 
         #page-indicator {
-            color: #1976d2; font-size: 15px; font-weight: 800;
+            color: #1976d2; font-size: 14px; font-weight: 800;
             background: #e3f2fd; padding: 6px 15px; border-radius: 20px;
         }
 
         .tools-row button { 
-            width: 45px; height: 45px; border: none; border-radius: 50%; 
+            width: 42px; height: 42px; border: none; border-radius: 50%; 
             background: #ffffff; cursor: pointer; 
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-            transition: all 0.2s ease; font-size: 18px;
+            transition: all 0.2s ease; font-size: 17px;
         }
         .tools-row button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.12); }
 
-        #layout-toggle { color: #f39c12; } 
-        #music-btn.playing { color: #1976d2; } 
-        #music-btn.paused { color: #95a5a6; }
+        /* Warna khusus tombol-tombol */
+        #zoom-in-btn { color: #00b894; } /* Hijau Mint */
+        #zoom-out-btn { color: #e17055; } /* Merah Bata */
+        #layout-toggle { color: #f39c12; } /* Kuning */
+        #music-btn.playing { color: #1976d2; } /* Biru */
+        #music-btn.paused { color: #95a5a6; } /* Abu-abu */
         
-        .divider { width: 2px; height: 25px; background: rgba(0, 0, 0, 0.08); border-radius: 5px; margin: 0 5px; }
+        .divider { width: 2px; height: 25px; background: rgba(0, 0, 0, 0.08); border-radius: 5px; margin: 0 2px; }
     </style>
 </head>
 <body>
 
     <div id="welcome-screen">
-        <!-- Logo RK -->
         <img src="logo_rk.png" alt="Logo RK" id="rk-logo" onerror="this.style.display='none'">
-        <!-- Tombol Play -->
         <button id="start-btn" title="Buka Lembaran & Putar Lagu">
             <i class="fa-solid fa-play"></i>
         </button>
     </div>
 
+    <!-- WADAH BUKU UTAMA -->
     <div id="book-wrapper">
         <div id="flipbook"></div>
     </div>
 
+    <!-- UI KONTROL -->
     <div class="controls" id="controls">
         <div class="navigation-row">
             <button class="nav-btn" id="prev-btn" title="Halaman Sebelumnya"><i class="fa-solid fa-chevron-left"></i></button>
@@ -187,6 +190,12 @@
 
         <div class="tools-row">
             <div id="page-indicator">Hal 1 / ?</div>
+            <div class="divider"></div>
+            
+            <!-- TOMBOL ZOOM BARU -->
+            <button id="zoom-out-btn" title="Perkecil Buku"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button id="zoom-in-btn" title="Perbesar Buku"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            
             <div class="divider"></div>
             <button id="layout-toggle" title="Ubah ke Mode 1/2 Halaman"><i class="fa-solid fa-book-open"></i></button>
             <button id="music-btn" class="playing" title="Matikan/Nyalakan Musik"><i class="fa-solid fa-pause"></i></button>
@@ -220,6 +229,11 @@
             const pageSlider = document.getElementById('page-slider');
             const pageIndicator = document.getElementById('page-indicator');
 
+            // Variabel Zoom
+            const zoomInBtn = document.getElementById('zoom-in-btn');
+            const zoomOutBtn = document.getElementById('zoom-out-btn');
+            let currentZoom = 1;
+
             bgMusic.volume = 0.5;
             flipSound.volume = 1.0; 
             
@@ -232,15 +246,28 @@
                 flipSound.play().catch(e => console.log("Gagal putar efek kertas"));
             };
 
-            // Fungsi memaksa layar penuh (Fullscreen)
             const openFullscreen = () => {
                 const elem = document.documentElement;
                 if (elem.requestFullscreen) {
                     elem.requestFullscreen().catch(()=>{});
-                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                } else if (elem.webkitRequestFullscreen) { 
                     elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) { /* IE11 */
+                } else if (elem.msRequestFullscreen) { 
                     elem.msRequestFullscreen();
+                }
+            };
+
+            // Fungsi Aplikasi Zoom Dinamis
+            const applyZoom = () => {
+                bookWrapper.style.transform = `scale(${currentZoom})`;
+                bookWrapper.style.transformOrigin = 'top center'; // Poros pembesaran di tengah atas
+                
+                if (currentZoom > 1) {
+                    // Beri jarak di bawah secara otomatis agar tombol tidak tertutup buku saat di-zoom
+                    const extraHeight = bookWrapper.offsetHeight * (currentZoom - 1);
+                    bookWrapper.style.marginBottom = `${extraHeight + 40}px`;
+                } else {
+                    bookWrapper.style.marginBottom = '10px';
                 }
             };
 
@@ -268,16 +295,15 @@
                 rkLogo.style.animation = "float 3s ease-in-out infinite"; 
                 startBtn.style.display = 'flex';
 
-                // SETUP FLIPBOOK - usePortrait: false MEMAKSA SELALU 2 HALAMAN
                 pageFlip = new St.PageFlip(flipbookEl, {
                     width: 450, height: 636, size: "stretch",
                     minWidth: 315, maxWidth: 1000, minHeight: 420, maxHeight: 1350,
                     showCover: true, mobileScrollSupport: false,
-                    usePortrait: false // <- INI YANG MEMAKSA TAMPILAN 2 HALAMAN DI HP
+                    usePortrait: false 
                 });
 
                 startBtn.addEventListener('click', () => {
-                    openFullscreen(); // Panggil fungsi Fullscreen saat diklik
+                    openFullscreen(); 
                     
                     welcomeScreen.style.display = 'none';
                     document.body.style.justifyContent = 'flex-start';
@@ -293,6 +319,22 @@
                     bgMusic.play().catch(console.error);
                 });
 
+                // --- EVENT TOMBOL ZOOM ---
+                zoomInBtn.addEventListener('click', () => {
+                    if (currentZoom < 2.5) { // Maksimal pembesaran 2.5x
+                        currentZoom += 0.5;
+                        applyZoom();
+                    }
+                });
+
+                zoomOutBtn.addEventListener('click', () => {
+                    if (currentZoom > 1) { // Minimal pembesaran (kembali normal)
+                        currentZoom -= 0.5;
+                        applyZoom();
+                    }
+                });
+
+                // --- EVENT NAVIGASI BUKU ---
                 document.getElementById('prev-btn').addEventListener('click', () => pageFlip.flipPrev());
                 document.getElementById('next-btn').addEventListener('click', () => pageFlip.flipNext());
 
