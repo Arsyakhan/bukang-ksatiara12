@@ -196,7 +196,34 @@
             .tool-btn { width: 32px; height: 32px; font-size: 14px; }
         }
 
-        /* --- POPUP (share & install) --- */
+        /* --- POPUP AJAKAN PASANG APLIKASI --- */
+        #install-sheet {
+            position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+            transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
+            width: min(92vw, 420px); z-index: 200;
+            background: #fff; border-radius: 16px; padding: 14px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            transition: transform 0.35s ease, opacity 0.35s ease;
+        }
+        #install-sheet.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+        .is-top { display: flex; gap: 12px; align-items: center; }
+        .is-icon { width: 52px; height: 52px; border-radius: 12px; flex: none; }
+        .is-text { font-size: 13px; line-height: 1.4; }
+        .is-text b { display: block; font-size: 15px; margin-bottom: 2px; }
+        .is-pdf { display: inline-block; margin-top: 4px; font-size: 12px; color: #1976d2; font-weight: 700; text-decoration: none; }
+        .is-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .is-actions button {
+            flex: 1; border: none; border-radius: 10px; padding: 10px 12px;
+            font-weight: 800; font-family: inherit; font-size: 14px; cursor: pointer;
+        }
+        #is-install { background: #43a047; color: #fff; }
+        #is-later { background: #eceff1; color: #2c3e50; }
+        @media (max-height: 500px) {
+            #install-sheet { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: min(48vw, 360px); transform: translateY(30px); }
+            #install-sheet.show { transform: translateY(0); }
+        }
+
+        /* --- POPUP (share & petunjuk iOS) --- */
         .modal {
             display: none; position: fixed; inset: 0; z-index: 10000;
             background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 16px;
@@ -278,6 +305,22 @@
         <button class="tool-btn bg-orange" id="sound-btn" title="Suara balik halaman" aria-label="Suara balik halaman"><i class="fa-solid fa-volume-high"></i></button>
         <button class="tool-btn bg-pink" id="music-btn" title="Musik" aria-label="Musik"><i class="fa-solid fa-music"></i></button>
         <button class="tool-btn bg-green" id="install-btn" title="Pasang sebagai aplikasi" aria-label="Pasang sebagai aplikasi" style="display:none"><i class="fa-solid fa-mobile-screen-button"></i></button>
+    </div>
+
+    <!-- POPUP AJAKAN PASANG APLIKASI -->
+    <div id="install-sheet" role="dialog" aria-label="Pasang aplikasi">
+        <div class="is-top">
+            <img class="is-icon" src="icon-192.png" alt="">
+            <div class="is-text">
+                <b>Pasang aplikasi</b>
+                <span id="is-desc">Buka buku ini langsung dari layar utama HP, layar penuh tanpa tampilan browser.</span><br>
+                <a class="is-pdf" href="bukang_compressed.pdf" download="Buku-Angkatan-Ksatiara-12.pdf"><i class="fa-solid fa-download"></i> Unduh PDF saja</a>
+            </div>
+        </div>
+        <div class="is-actions">
+            <button id="is-install">Pasang</button>
+            <button id="is-later">Nanti</button>
+        </div>
     </div>
 
     <!-- POPUP SHARE -->
@@ -395,6 +438,7 @@
             let builtWidth = 0;
             let pageRatio = 0.707;
             let dragging = false;
+            let bookRevealed = false;
 
             const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
             const setThumb = (ratio) => { sliderThumb.style.left = (ratio * (100 - THUMB_PCT)) + '%'; };
@@ -598,6 +642,13 @@
 
             // ---------- PASANG SEBAGAI APLIKASI ----------
             const installModal = $('install-modal');
+            const installSheet = $('install-sheet');
+            const isDesc = $('is-desc');
+            const isInstallBtn = $('is-install');
+            const isLaterBtn = $('is-later');
+            const DISMISS_KEY = 'bukang_install_dismissed';
+            let installSheetShown = false;
+
             const isStandalone = () =>
                 window.matchMedia('(display-mode: standalone)').matches ||
                 window.matchMedia('(display-mode: fullscreen)').matches ||
@@ -605,13 +656,33 @@
             const isIOS = () =>
                 /iphone|ipad|ipod/i.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const dismissedRecently = () => {
+                try {
+                    const t = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
+                    return Date.now() - t < 7 * 24 * 3600 * 1000; // sembunyikan 7 hari setelah "Nanti"
+                } catch (e) { return false; }
+            };
             const updateInstallBtn = () => {
                 installBtn.style.display = (!isStandalone() && (deferredInstallPrompt || isIOS())) ? 'flex' : 'none';
             };
-            updateInstallBtn();
-            document.addEventListener('install-available', updateInstallBtn);
-            window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; updateInstallBtn(); });
-            installBtn.addEventListener('click', async () => {
+            const hideInstallSheet = (remember) => {
+                installSheet.classList.remove('show');
+                if (remember) { try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch (e) {} }
+            };
+            const maybeShowInstallSheet = () => {
+                if (installSheetShown || !bookRevealed || !IS_TOUCH || isStandalone() || dismissedRecently()) return;
+                if (!(deferredInstallPrompt || isIOS())) return;
+                installSheetShown = true;
+                if (deferredInstallPrompt) {
+                    isDesc.textContent = 'Buka buku ini langsung dari layar utama HP, layar penuh tanpa tampilan browser.';
+                    isInstallBtn.textContent = 'Pasang';
+                } else {
+                    isDesc.textContent = 'Di iPhone/iPad: ketuk Bagikan, lalu pilih "Tambah ke Layar Utama".';
+                    isInstallBtn.textContent = 'Lihat cara';
+                }
+                setTimeout(() => installSheet.classList.add('show'), 2500);
+            };
+            const doInstall = async () => {
                 if (deferredInstallPrompt) {
                     deferredInstallPrompt.prompt();
                     try { await deferredInstallPrompt.userChoice; } catch (e) {}
@@ -620,7 +691,22 @@
                 } else if (isIOS()) {
                     installModal.classList.add('open');
                 }
+            };
+
+            updateInstallBtn();
+            document.addEventListener('install-available', () => { updateInstallBtn(); maybeShowInstallSheet(); });
+            window.addEventListener('appinstalled', () => {
+                deferredInstallPrompt = null;
+                hideInstallSheet(false);
+                updateInstallBtn();
             });
+            installBtn.addEventListener('click', doInstall);
+            isInstallBtn.addEventListener('click', () => {
+                const viaPrompt = !!deferredInstallPrompt;
+                hideInstallSheet(!viaPrompt); // iOS: cukup sekali ditunjukkan cara-nya
+                doInstall();
+            });
+            isLaterBtn.addEventListener('click', () => hideInstallSheet(true));
 
             // ---------- POPUP: tutup lewat tombol X / klik latar / Escape ----------
             document.querySelectorAll('.modal').forEach(m => {
@@ -1082,6 +1168,9 @@
                         bottomBar.style.display = 'block';
                         topTools.style.display = 'flex';
                         brandLogo.style.display = 'block';
+
+                        bookRevealed = true;
+                        maybeShowInstallSheet(); // ajak pasang aplikasi (jika memungkinkan)
                     }, 1000);
                 }, 1200);
 
