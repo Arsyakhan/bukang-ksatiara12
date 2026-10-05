@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Ksatiara 12">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#e3f2fd">
 
@@ -12,12 +13,12 @@
     <meta property="og:title" content="Buku Angkatan Ksatiara 12">
     <meta property="og:description" content="22 Purnama: Cerita dari Rumah Kita - Rumah Kepemimpinan">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="logo_rk.png">
+    <meta property="og:image" content="icon-512.png">
 
     <!-- PWA Manifest & Ikon -->
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="logo_rk.png">
-    <link rel="icon" type="image/png" href="logo_rk.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icon-192.png">
 
     <title>Buku Angkatan Ksatiara 12</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,7 +28,7 @@
         /* --- TEMA DASAR --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root { --pad-top: 10px; --pad-bottom: 78px; }
-        html { height: 100%; }
+        html { height: 100%; touch-action: pan-x pan-y; }
         body {
             background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -37,8 +38,15 @@
             overflow: hidden;
             color: #2c3e50;
             overscroll-behavior: contain;
+            touch-action: pan-x pan-y; /* pinch ditangani oleh JavaScript, bukan browser */
         }
         body.zoomed { overflow: auto; height: auto; min-height: 100vh; min-height: 100dvh; }
+
+        /* Pengukur area aman (poni/notch) untuk mode aplikasi */
+        #safe-probe {
+            position: fixed; left: 0; top: 0; width: 0; height: 0; visibility: hidden; pointer-events: none;
+            padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        }
 
         /* --- LOADING SCREEN --- */
         #welcome-screen {
@@ -55,9 +63,11 @@
             100% { transform: scale(1);   filter: drop-shadow(0 0 10px rgba(25, 118, 210, 0.2)); }
         }
 
-        /* --- LOGO POJOK KIRI BAWAH (seperti "Powered by" di Heyzine) --- */
+        /* --- LOGO POJOK KIRI BAWAH --- */
         #brand-logo {
-            display: none; position: fixed; left: 24px; bottom: 20px;
+            display: none; position: fixed;
+            left: calc(24px + env(safe-area-inset-left, 0px));
+            bottom: calc(20px + env(safe-area-inset-bottom, 0px));
             width: 110px; opacity: 0.9; pointer-events: none; z-index: 50;
         }
         @media (max-width: 900px) { #brand-logo { display: none !important; } }
@@ -73,7 +83,6 @@
 
         #book-wrapper { display: none; position: relative; z-index: 1; }
 
-        /* Bayangan buku hanya di area yang terlihat (cover = setengah) */
         #book-shadow {
             position: absolute; top: 0; bottom: 0; left: 0; width: 100%;
             border-radius: 3px; box-shadow: 0 10px 40px rgba(0,0,0,0.18);
@@ -82,7 +91,6 @@
         .st-first #book-shadow { left: 50%; width: 50%; }
         .st-last  #book-shadow { left: 0;   width: 50%; }
 
-        /* Efek tumpukan halaman di sisi buku */
         .edge { position: absolute; top: 4px; bottom: 0; width: 0; z-index: 1; pointer-events: none; transition: width 0.45s ease; }
         #edge-right {
             left: 100%; border-radius: 0 3px 3px 0;
@@ -126,10 +134,10 @@
 
         /* --- SLIDER BAWAH + PRATINJAU HALAMAN --- */
         #bottom-bar {
-            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
             width: min(840px, 80vw); display: none; z-index: 100;
         }
-        @media (max-height: 500px) { #bottom-bar { bottom: 12px; } }
+        @media (max-height: 500px) { #bottom-bar { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); } }
         #slider-track {
             position: relative; height: 8px; margin: 10px 0; border-radius: 8px;
             background: rgba(45, 52, 54, 0.18); cursor: pointer; touch-action: none;
@@ -163,7 +171,11 @@
 
         /* --- TOOLBAR KARTU PUTIH (pojok kanan atas) --- */
         #top-tools {
-            position: fixed; top: 12px; right: 12px; display: none; gap: 10px; z-index: 100;
+            position: fixed;
+            top: calc(12px + env(safe-area-inset-top, 0px));
+            right: calc(12px + env(safe-area-inset-right, 0px));
+            max-width: calc(100vw - 24px);
+            display: none; flex-wrap: wrap; justify-content: flex-end; gap: 10px; z-index: 100;
             padding: 8px 10px; background: #fff; border-radius: 8px;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12);
         }
@@ -177,14 +189,14 @@
         .bg-red { background: #e0574f; } .bg-blue { background: #5aa9d6; }
         .bg-teal { background: #2fbfa8; } .bg-dark { background: #3b4a5c; }
         .bg-purple { background: #8e6bd1; } .bg-orange { background: #f2994a; }
-        .bg-pink { background: #e8629a; }
+        .bg-pink { background: #e8629a; } .bg-green { background: #43a047; }
         #music-btn.playing { box-shadow: 0 0 0 3px rgba(232, 98, 154, 0.35); }
         @media (max-width: 480px) {
-            #top-tools { gap: 6px; padding: 6px 8px; top: 8px; right: 8px; }
+            #top-tools { gap: 6px; padding: 6px 8px; }
             .tool-btn { width: 32px; height: 32px; font-size: 14px; }
         }
 
-        /* --- POPUP SHARE --- */
+        /* --- POPUP (share & install) --- */
         .modal {
             display: none; position: fixed; inset: 0; z-index: 10000;
             background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 16px;
@@ -199,6 +211,7 @@
             position: absolute; top: 10px; right: 12px; border: none; background: none;
             font-size: 26px; line-height: 1; cursor: pointer; color: #636e72;
         }
+        .how-to { margin: 0; padding-left: 20px; line-height: 1.7; font-size: 14px; }
         .share-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
         .share-item {
             display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -220,6 +233,7 @@
     </style>
 </head>
 <body>
+    <div id="safe-probe"></div>
 
     <!-- SCREEN LOADING -->
     <div id="welcome-screen">
@@ -263,12 +277,13 @@
         <button class="tool-btn bg-purple" id="view-btn" title="Tampilan 1 halaman" aria-label="Ganti tampilan 1 atau 2 halaman"><i class="fa-solid fa-file"></i></button>
         <button class="tool-btn bg-orange" id="sound-btn" title="Suara balik halaman" aria-label="Suara balik halaman"><i class="fa-solid fa-volume-high"></i></button>
         <button class="tool-btn bg-pink" id="music-btn" title="Musik" aria-label="Musik"><i class="fa-solid fa-music"></i></button>
+        <button class="tool-btn bg-green" id="install-btn" title="Pasang sebagai aplikasi" aria-label="Pasang sebagai aplikasi" style="display:none"><i class="fa-solid fa-mobile-screen-button"></i></button>
     </div>
 
     <!-- POPUP SHARE -->
     <div class="modal" id="share-modal">
         <div class="modal-card">
-            <button class="modal-close" id="share-close" aria-label="Tutup">&times;</button>
+            <button class="modal-close" aria-label="Tutup">&times;</button>
             <h3>Bagikan buku ini</h3>
             <div class="share-grid">
                 <a class="share-item" id="sh-wa" target="_blank" rel="noopener"><span style="background:#25d366"><i class="fa-brands fa-whatsapp"></i></span>WhatsApp</a>
@@ -290,6 +305,20 @@
         </div>
     </div>
 
+    <!-- POPUP CARA PASANG DI iPHONE/iPAD -->
+    <div class="modal" id="install-modal">
+        <div class="modal-card">
+            <button class="modal-close" aria-label="Tutup">&times;</button>
+            <h3>Pasang sebagai aplikasi</h3>
+            <ol class="how-to">
+                <li>Buka halaman ini di <b>Safari</b>.</li>
+                <li>Ketuk tombol <b>Bagikan</b> <i class="fa-solid fa-arrow-up-from-bracket"></i> di layar.</li>
+                <li>Pilih <b>Tambah ke Layar Utama</b> (Add to Home Screen).</li>
+                <li>Ketuk <b>Tambah</b>. Ikon aplikasi akan muncul di layar utama.</li>
+            </ol>
+        </div>
+    </div>
+
     <!-- AUDIO -->
     <audio id="bg-music" src="music.mp3.mp3" loop preload="auto"></audio>
 
@@ -297,6 +326,18 @@
     <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
 
     <script>
+        // Tangkap prompt install sedini mungkin (bisa terjadi sebelum halaman selesai disiapkan)
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            document.dispatchEvent(new Event('install-available'));
+        });
+
+        // Cegah zoom bawaan Safari iOS (kita pakai pinch sendiri)
+        ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev =>
+            document.addEventListener(ev, (e) => e.preventDefault()));
+
         document.addEventListener("DOMContentLoaded", async () => {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
             const pdfUrl = 'bukang_compressed.pdf';
@@ -304,19 +345,21 @@
 
             // --- Pengaturan ---
             const IS_TOUCH = window.matchMedia('(pointer: coarse)').matches;
-            const TARGET_WIDTH = IS_TOUCH ? 800 : 1000;  // lebar piksel canvas tiap halaman
-            const THUMB_W = 160;                          // lebar piksel thumbnail pratinjau
+            const TARGET_WIDTH = IS_TOUCH ? 800 : 1000;      // lebar piksel canvas tiap halaman (zoom normal)
+            const MAX_HI_WIDTH = IS_TOUCH ? 1800 : 2400;     // lebar maksimal saat di-zoom (lebih tajam)
+            const THUMB_W = 160;
             const RENDER_RADIUS = 3;
             const KEEP_RADIUS = 8;
             const MAX_BOOK_WIDTH_TWO = 1000;
             const MAX_BOOK_WIDTH_ONE = 650;
-            const THUMB_PCT = 12;                         // lebar "thumb" slider (% dari track)
-            const ZOOM_STEPS = [1, 1.5, 2, 3];
+            const THUMB_PCT = 12;
+            const MAX_ZOOM = 4;
 
             const $ = (id) => document.getElementById(id);
             const root = document.documentElement;
             const welcomeScreen = $('welcome-screen');
             const brandLogo = $('brand-logo');
+            const safeProbe = $('safe-probe');
             const zoomStage = $('zoom-stage');
             const zoomer = $('zoomer');
             const shift = $('book-shift');
@@ -339,6 +382,7 @@
             const viewBtn = $('view-btn');
             const soundBtn = $('sound-btn');
             const musicBtn = $('music-btn');
+            const installBtn = $('install-btn');
             const bgMusic = $('bg-music');
             bgMusic.volume = 0.5;
 
@@ -354,6 +398,7 @@
 
             const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
             const setThumb = (ratio) => { sliderThumb.style.left = (ratio * (100 - THUMB_PCT)) + '%'; };
+            const anyModalOpen = () => !!document.querySelector('.modal.open');
 
             // Mode tampilan: 2 = dua halaman, 1 = satu halaman (pilihan diingat)
             let viewMode = 2;
@@ -367,6 +412,7 @@
             let flipForward = () => {};
             let flipBackward = () => {};
             let goToIndex = () => {};
+            let onZoomSettled = () => {};
 
             // ---------- SUARA KERTAS ----------
             const flipAudio = new Audio('flip.mp3');
@@ -395,10 +441,12 @@
             });
 
             // ---------- ZOOM ----------
+            let zoomUiState = null;
             const applyZoom = () => {
-                document.body.classList.toggle('zoomed', currentZoom > 1);
-                if (flipbookEl) flipbookEl.style.pointerEvents = currentZoom > 1 ? 'none' : '';
-                if (currentZoom > 1) {
+                const zoomed = currentZoom > 1.01;
+                document.body.classList.toggle('zoomed', zoomed);
+                if (flipbookEl) flipbookEl.style.pointerEvents = zoomed ? 'none' : '';
+                if (zoomed) {
                     zoomer.style.transform = `scale(${currentZoom})`;
                     zoomStage.style.width = `${shift.offsetWidth * currentZoom}px`;
                     zoomStage.style.height = `${shift.offsetHeight * currentZoom}px`;
@@ -407,17 +455,84 @@
                     zoomStage.style.width = '';
                     zoomStage.style.height = '';
                 }
-                const max = currentZoom >= ZOOM_STEPS[ZOOM_STEPS.length - 1];
-                zoomBtn.innerHTML = max
-                    ? '<i class="fa-solid fa-magnifying-glass-minus"></i>'
-                    : '<i class="fa-solid fa-magnifying-glass-plus"></i>';
-                zoomBtn.title = max ? 'Kembali normal' : 'Perbesar';
+                if (zoomUiState !== zoomed) {
+                    zoomUiState = zoomed;
+                    zoomBtn.innerHTML = zoomed
+                        ? '<i class="fa-solid fa-magnifying-glass-minus"></i>'
+                        : '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+                    zoomBtn.title = zoomed ? 'Kembali normal' : 'Perbesar';
+                }
+                onZoomSettled(); // render ulang lebih tajam setelah zoom berhenti
             };
-            zoomBtn.addEventListener('click', () => {
-                const i = ZOOM_STEPS.indexOf(currentZoom);
-                currentZoom = ZOOM_STEPS[(i + 1) % ZOOM_STEPS.length];
+
+            // Zoom dengan menjaga titik (ax, ay) di konten tetap berada di posisi layar (sx, sy)
+            const zoomAround = (newZoom, ax, ay, sx, sy) => {
+                currentZoom = clamp(newZoom, 1, MAX_ZOOM);
                 applyZoom();
+                const r = zoomStage.getBoundingClientRect();
+                window.scrollBy(r.left + ax * currentZoom - sx, r.top + ay * currentZoom - sy);
+            };
+            const zoomTo = (newZoom, sx, sy) => {
+                const r = zoomStage.getBoundingClientRect();
+                zoomAround(newZoom, (sx - r.left) / currentZoom, (sy - r.top) / currentZoom, sx, sy);
+            };
+
+            // Tombol zoom: normal <-> 2x
+            zoomBtn.addEventListener('click', () => {
+                zoomTo(currentZoom > 1.01 ? 1 : 2, window.innerWidth / 2, window.innerHeight / 2);
             });
+
+            // ---------- PINCH (DUA JARI) DI HP ----------
+            let pinch = null;
+            let pinchBlock = false;
+            const touchDist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+            const touchMid = (t) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 });
+
+            window.addEventListener('touchstart', (e) => {
+                if (!pageFlip || anyModalOpen()) return;
+                if (e.touches.length >= 2) {
+                    pinchBlock = true;
+                    e.stopPropagation(); // jangan sampai terbaca sebagai geseran balik halaman
+                    const m = touchMid(e.touches);
+                    const r = zoomStage.getBoundingClientRect();
+                    pinch = {
+                        d0: Math.max(touchDist(e.touches), 1),
+                        z0: currentZoom,
+                        ax: (m.x - r.left) / currentZoom,
+                        ay: (m.y - r.top) / currentZoom
+                    };
+                }
+            }, { capture: true, passive: false });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!pinchBlock) return;
+                e.stopPropagation();
+                if (pinch && e.touches.length >= 2) {
+                    if (e.cancelable) e.preventDefault();
+                    const m = touchMid(e.touches);
+                    zoomAround(pinch.z0 * touchDist(e.touches) / pinch.d0, pinch.ax, pinch.ay, m.x, m.y);
+                }
+            }, { capture: true, passive: false });
+
+            const endTouch = (e) => {
+                if (!pinchBlock) return;
+                e.stopPropagation();
+                if (e.touches.length < 2) pinch = null;
+                if (e.touches.length === 0) {
+                    pinchBlock = false;
+                    if (currentZoom < 1.08 && currentZoom !== 1) { currentZoom = 1; applyZoom(); }
+                }
+            };
+            window.addEventListener('touchend', endTouch, { capture: true });
+            window.addEventListener('touchcancel', endTouch, { capture: true });
+
+            // Trackpad pinch / Ctrl + scroll di laptop
+            window.addEventListener('wheel', (e) => {
+                if (!e.ctrlKey || !pageFlip) return;
+                e.preventDefault();
+                zoomTo(currentZoom * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
+                if (currentZoom < 1.03 && currentZoom !== 1) { currentZoom = 1; applyZoom(); }
+            }, { passive: false });
 
             // ---------- MUSIK ----------
             const setMusicUI = (playing) => {
@@ -434,7 +549,6 @@
                 else { bgMusic.pause(); }
             });
 
-            // Autoplay: browser mewajibkan interaksi pertama dari pengguna
             const gestureEvents = ['click', 'touchend', 'keydown'];
             const removeGestureListeners = () =>
                 gestureEvents.forEach(ev => document.removeEventListener(ev, startAudio));
@@ -482,6 +596,40 @@
             };
             updateViewBtn();
 
+            // ---------- PASANG SEBAGAI APLIKASI ----------
+            const installModal = $('install-modal');
+            const isStandalone = () =>
+                window.matchMedia('(display-mode: standalone)').matches ||
+                window.matchMedia('(display-mode: fullscreen)').matches ||
+                window.navigator.standalone === true;
+            const isIOS = () =>
+                /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const updateInstallBtn = () => {
+                installBtn.style.display = (!isStandalone() && (deferredInstallPrompt || isIOS())) ? 'flex' : 'none';
+            };
+            updateInstallBtn();
+            document.addEventListener('install-available', updateInstallBtn);
+            window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; updateInstallBtn(); });
+            installBtn.addEventListener('click', async () => {
+                if (deferredInstallPrompt) {
+                    deferredInstallPrompt.prompt();
+                    try { await deferredInstallPrompt.userChoice; } catch (e) {}
+                    deferredInstallPrompt = null;
+                    updateInstallBtn();
+                } else if (isIOS()) {
+                    installModal.classList.add('open');
+                }
+            });
+
+            // ---------- POPUP: tutup lewat tombol X / klik latar / Escape ----------
+            document.querySelectorAll('.modal').forEach(m => {
+                m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); });
+            });
+            document.querySelectorAll('.modal-close').forEach(b => {
+                b.addEventListener('click', () => b.closest('.modal').classList.remove('open'));
+            });
+
             // ---------- SHARE ----------
             const shareModal = $('share-modal');
             const shareUrl = $('share-url');
@@ -509,17 +657,12 @@
                 $('sh-x').href = `https://twitter.com/intent/tweet?url=${u}&text=${t}`;
                 $('sh-mail').href = `mailto:?subject=${t}&body=${u}`;
             };
-            const openShare = () => {
+            shareBtn.addEventListener('click', () => {
                 sharePageNum.value = currentPageNum;
                 sharePageNum.max = totalPages || '';
                 refreshShare();
                 shareModal.classList.add('open');
-            };
-            const closeShare = () => shareModal.classList.remove('open');
-
-            shareBtn.addEventListener('click', openShare);
-            $('share-close').addEventListener('click', closeShare);
-            shareModal.addEventListener('click', (e) => { if (e.target === shareModal) closeShare(); });
+            });
             shareWithPage.addEventListener('change', refreshShare);
             sharePageNum.addEventListener('input', () => { shareWithPage.checked = true; refreshShare(); });
             shareCopy.addEventListener('click', async () => {
@@ -540,8 +683,11 @@
 
             // ---------- KEYBOARD ----------
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && shareModal.classList.contains('open')) { closeShare(); return; }
-                if (!pageFlip || shareModal.classList.contains('open')) return;
+                if (e.key === 'Escape' && anyModalOpen()) {
+                    document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+                    return;
+                }
+                if (!pageFlip || anyModalOpen()) return;
                 const tag = (e.target && e.target.tagName) || '';
                 if (tag === 'INPUT' || tag === 'TEXTAREA') return;
                 if (e.key === 'ArrowLeft') flipBackward();
@@ -556,14 +702,12 @@
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
                 totalPages = pdf.numPages;
 
-                // Ukuran buku mengikuti rasio asli halaman PDF
                 const firstPage = await pdf.getPage(1);
                 const baseViewport = firstPage.getViewport({ scale: 1 });
                 const pageW = 450;
                 const pageH = Math.round(pageW * baseViewport.height / baseViewport.width);
                 pageRatio = pageW / pageH;
 
-                // Buat semua halaman kosong dulu (canvas dirender saat dibutuhkan)
                 const canvases = [];
                 const pageEls = [];
                 for (let i = 0; i < totalPages; i++) {
@@ -575,26 +719,78 @@
                     pageEls.push(pageDiv);
                 }
 
-                // ---------- RENDER LAZY ----------
-                const rendered = new Set();
+                // ---------- LOGIKA HALAMAN / SPREAD ----------
+                // Mode 2 halaman: [0] cover, [1,2], [3,4], ... ; halaman terakhir sendiri jika jumlah halaman genap
+                const spreadStart = (t) => viewMode === 2 ? (t <= 0 ? 0 : (t % 2 === 1 ? t : t - 1)) : t;
+                const spreadPages = (start) => {
+                    if (viewMode === 2) {
+                        if (start === 0) return [0];
+                        return start + 1 <= totalPages - 1 ? [start, start + 1] : [start];
+                    }
+                    return [start];
+                };
+                const spreadLabel = (start) => {
+                    const p = spreadPages(start);
+                    return p.length === 2 ? `${p[0] + 1} - ${p[1] + 1}` : `${p[0] + 1}`;
+                };
+                const nextIdx = (cur) => viewMode === 2 ? (cur === 0 ? 1 : cur + 2) : cur + 1;
+                const prevIdx = (cur) => viewMode === 2 ? (cur <= 1 ? 0 : cur - 2) : cur - 1;
+                const getState = (idx) => {
+                    if (viewMode !== 2 || totalPages < 2) return 'mid';
+                    if (idx <= 0) return 'first';
+                    if (totalPages % 2 === 0 && idx >= totalPages - 1) return 'last';
+                    return 'mid';
+                };
+                const isAtStart = (idx) => idx <= 0;
+                const isAtEnd = (idx) => viewMode === 2
+                    ? (idx === 0 ? totalPages <= 1 : Math.min(idx + 1, totalPages - 1) >= totalPages - 1)
+                    : idx >= totalPages - 1;
+                const currentIdx = () => {
+                    try { return pageFlip ? pageFlip.getCurrentPageIndex() : 0; } catch (e) { return 0; }
+                };
+
+                // ---------- RENDER LAZY (lebih tajam saat di-zoom) ----------
+                const renderedWidth = new Map(); // indeks halaman -> lebar piksel canvas saat ini
                 const rendering = new Set();
                 let updateToken = 0;
                 const pause = (ms) => new Promise(r => setTimeout(r, ms));
 
+                // Lebar render yang dibutuhkan: halaman yang terlihat dirender lebih besar saat di-zoom
+                const desiredWidth = (idx) => {
+                    if (currentZoom > 1.3 && spreadPages(spreadStart(currentIdx())).includes(idx)) {
+                        const across = viewMode === 2 ? 2 : 1;
+                        const pageCss = builtWidth / across;
+                        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                        return clamp(Math.round(pageCss * currentZoom * dpr), TARGET_WIDTH, MAX_HI_WIDTH);
+                    }
+                    return TARGET_WIDTH;
+                };
+
                 const renderPage = async (idx) => {
-                    if (rendered.has(idx) || rendering.has(idx)) return;
+                    const targetW = desiredWidth(idx);
+                    const cur = renderedWidth.get(idx);
+                    if (rendering.has(idx) || (cur && Math.abs(cur - targetW) < 8)) return false;
                     rendering.add(idx);
                     try {
                         const page = await pdf.getPage(idx + 1);
                         const base = page.getViewport({ scale: 1 });
-                        const viewport = page.getViewport({ scale: TARGET_WIDTH / base.width });
+                        const viewport = page.getViewport({ scale: targetW / base.width });
+                        // Render ke canvas sementara agar halaman tidak berkedip kosong
+                        const off = document.createElement('canvas');
+                        off.width = Math.floor(viewport.width);
+                        off.height = Math.floor(viewport.height);
+                        await page.render({ canvasContext: off.getContext('2d'), viewport }).promise;
                         const canvas = canvases[idx];
-                        canvas.width = Math.floor(viewport.width);
-                        canvas.height = Math.floor(viewport.height);
-                        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                        rendered.add(idx);
+                        canvas.width = off.width;
+                        canvas.height = off.height;
+                        canvas.getContext('2d').drawImage(off, 0, 0);
+                        renderedWidth.set(idx, off.width);
+                        // Kalau kebutuhan berubah selama merender, ulangi
+                        if (Math.abs(desiredWidth(idx) - off.width) > 8) scheduleUpdate(currentIdx(), 120);
+                        return true;
                     } catch (err) {
                         console.error('Gagal render halaman', idx + 1, err);
+                        return false;
                     } finally {
                         rendering.delete(idx);
                     }
@@ -603,21 +799,21 @@
                 const freePage = (idx) => {
                     canvases[idx].width = 0;
                     canvases[idx].height = 0;
-                    rendered.delete(idx);
+                    renderedWidth.delete(idx);
                 };
 
                 const updateVisiblePages = async (center) => {
                     const token = ++updateToken;
-                    for (const i of [...rendered]) {
+                    for (const i of [...renderedWidth.keys()]) {
                         if (Math.abs(i - center) > KEEP_RADIUS) freePage(i);
                     }
                     const wanted = [center];
                     for (let d = 1; d <= RENDER_RADIUS; d++) wanted.push(center + d, center - d);
                     for (const i of wanted) {
                         if (token !== updateToken) return;
-                        if (i >= 0 && i < totalPages && !rendered.has(i)) {
-                            await renderPage(i);
-                            await pause(25);
+                        if (i >= 0 && i < totalPages) {
+                            const did = await renderPage(i);
+                            if (did) await pause(25);
                         }
                     }
                 };
@@ -627,6 +823,7 @@
                     clearTimeout(scheduleTimer);
                     scheduleTimer = setTimeout(() => updateVisiblePages(center), delay);
                 };
+                onZoomSettled = () => scheduleUpdate(currentIdx(), 350);
 
                 // ---------- THUMBNAIL (untuk pratinjau slider) ----------
                 const thumbCache = new Map();
@@ -655,37 +852,6 @@
                     pvCard.appendChild(c);
                     return c;
                 });
-
-                // ---------- LOGIKA HALAMAN / SPREAD ----------
-                // Mode 2 halaman: [0] cover, [1,2], [3,4], ... ; halaman terakhir sendiri jika jumlah halaman genap
-                const spreadStart = (t) => viewMode === 2 ? (t <= 0 ? 0 : (t % 2 === 1 ? t : t - 1)) : t;
-                const spreadPages = (start) => {
-                    if (viewMode === 2) {
-                        if (start === 0) return [0];
-                        return start + 1 <= totalPages - 1 ? [start, start + 1] : [start];
-                    }
-                    return [start];
-                };
-                const spreadLabel = (start) => {
-                    const p = spreadPages(start);
-                    return p.length === 2 ? `${p[0] + 1} - ${p[1] + 1}` : `${p[0] + 1}`;
-                };
-                const nextIdx = (cur) => viewMode === 2 ? (cur === 0 ? 1 : cur + 2) : cur + 1;
-                const prevIdx = (cur) => viewMode === 2 ? (cur <= 1 ? 0 : cur - 2) : cur - 1;
-                const getState = (idx) => {
-                    if (viewMode !== 2 || totalPages < 2) return 'mid';
-                    if (idx <= 0) return 'first';
-                    if (totalPages % 2 === 0 && idx >= totalPages - 1) return 'last';
-                    return 'mid';
-                };
-                const isAtStart = (idx) => idx <= 0;
-                const isAtEnd = (idx) => viewMode === 2
-                    ? (idx === 0 ? totalPages <= 1 : Math.min(idx + 1, totalPages - 1) >= totalPages - 1)
-                    : idx >= totalPages - 1;
-
-                const currentIdx = () => {
-                    try { return pageFlip ? pageFlip.getCurrentPageIndex() : 0; } catch (e) { return 0; }
-                };
 
                 // Terapkan tampilan sesuai halaman: geser cover ke tengah, tumpukan halaman, panah, slider, link
                 const applyBookState = (idx) => {
@@ -755,14 +921,20 @@
                     syncLater();
                 };
 
-                // ---------- UKURAN BUKU (selalu muat di layar) ----------
+                // ---------- UKURAN BUKU (selalu muat di layar, hormati poni/notch) ----------
                 const computeBookWidth = () => {
-                    const padTop = 10;
-                    const padBottom = window.innerHeight < 500 ? 52 : 78;
+                    const cs = getComputedStyle(safeProbe);
+                    const sT = parseFloat(cs.paddingTop) || 0;
+                    const sB = parseFloat(cs.paddingBottom) || 0;
+                    const sL = parseFloat(cs.paddingLeft) || 0;
+                    const sR = parseFloat(cs.paddingRight) || 0;
+                    const padTop = 10 + sT;
+                    const padBottom = (window.innerHeight < 500 ? 52 : 78) + sB;
                     root.style.setProperty('--pad-top', padTop + 'px');
                     root.style.setProperty('--pad-bottom', padBottom + 'px');
+
                     const across = viewMode === 2 ? 2 : 1;
-                    const availW = window.innerWidth * 0.96;
+                    const availW = (window.innerWidth - sL - sR) * 0.96;
                     const availH = window.innerHeight - padTop - padBottom;
                     const maxW = viewMode === 2 ? MAX_BOOK_WIDTH_TWO : MAX_BOOK_WIDTH_ONE;
                     return Math.max(120, Math.floor(Math.min(availW, availH * pageRatio * across, maxW)));
@@ -813,7 +985,6 @@
                         if (e.data === 'read') applyBookState(currentIdx());
                     });
 
-                    // Tanpa animasi saat pertama kali membangun
                     shift.classList.add('no-anim');
                     applyBookState(startIdx);
                     requestAnimationFrame(() => requestAnimationFrame(() => shift.classList.remove('no-anim')));
@@ -897,7 +1068,6 @@
                 const hashPage = parseHash();
                 const startIdx = spreadStart(clamp((hashPage || 1) - 1, 0, totalPages - 1));
 
-                // Render halaman awal sebelum buku ditampilkan
                 await updateVisiblePages(startIdx);
 
                 // Transisi loading -> buku
@@ -930,7 +1100,6 @@
                     if (n !== null && pageFlip) goToIndex(n - 1);
                 });
 
-                // Ukuran ulang (putar layar, fullscreen, dll.)
                 let resizeTimer;
                 const onResize = () => {
                     clearTimeout(resizeTimer);
