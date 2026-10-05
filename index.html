@@ -22,7 +22,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; margin: 0; padding: 0; 
             font-family: 'Nunito', sans-serif;
-            overflow: hidden; /* Dibuat hidden agar layout seperti aplikasi asli */
+            overflow: hidden; 
             color: #2c3e50;
         }
         
@@ -67,17 +67,17 @@
         .stf__item.--right .page { box-shadow: inset 15px 0 30px rgba(0,0,0,0.04) !important; }
         .stf__item.--flipping .page { box-shadow: inset 0 0 20px rgba(0,0,0,0.1) !important; }
 
-        /* --- UI MINIMALIS: PANAH KIRI & KANAN (Seperti Referensi) --- */
+        /* --- UI MINIMALIS: PANAH KIRI & KANAN --- */
         .side-nav {
             position: absolute; top: 50%; transform: translateY(-50%);
             width: 45px; height: 45px; border-radius: 50%;
-            background-color: #e74c3c; /* Lingkaran merah sesuai referensi */
+            background-color: #e74c3c; 
             color: white; border: none; font-size: 18px;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; z-index: 100;
             box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
             transition: all 0.2s; opacity: 0.8;
-            display: none; /* Disembunyikan saat loading */
+            display: none; 
         }
         .side-nav:hover { opacity: 1; transform: translateY(-50%) scale(1.1); }
         #nav-left { left: 2vw; }
@@ -91,13 +91,12 @@
             z-index: 100;
         }
 
-        /* Tooltip Nomor Halaman yang Muncul (Seperti kapsul di referensi) */
         #page-tooltip {
             background-color: rgba(99, 110, 114, 0.9); color: white;
             padding: 4px 12px; border-radius: 12px; font-size: 14px; font-weight: 700;
             margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             pointer-events: none; transition: 0.1s ease-out;
-            opacity: 0; /* Hanya muncul saat ditarik/berubah */
+            opacity: 0; 
         }
 
         #page-slider {
@@ -109,13 +108,13 @@
         #page-slider::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
             width: 18px; height: 18px; border-radius: 50%;
-            background: #2d3436; cursor: pointer; /* Bulatan abu gelap elegan */
+            background: #2d3436; cursor: pointer; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             transition: transform 0.2s;
         }
         #page-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
 
-        /* --- MINI FLOATING MENU (Musik & Fullscreen di pojok atas) --- */
+        /* --- MINI FLOATING MENU (Pojok atas) --- */
         #top-tools {
             position: absolute; top: 15px; right: 15px;
             display: none; gap: 10px; z-index: 100;
@@ -142,7 +141,7 @@
         <div id="flipbook"></div>
     </div>
 
-    <!-- TOMBOL NAVIGASI SAMPING KIRI KANAN -->
+    <!-- TOMBOL NAVIGASI SAMPING -->
     <button class="side-nav" id="nav-left"><i class="fa-solid fa-chevron-left"></i></button>
     <button class="side-nav" id="nav-right"><i class="fa-solid fa-chevron-right"></i></button>
 
@@ -152,7 +151,7 @@
         <input type="range" id="page-slider" min="1" max="1" value="1">
     </div>
 
-    <!-- TOMBOL KECIL POJOK KANAN ATAS (Suara & Fullscreen) -->
+    <!-- TOMBOL KECIL POJOK -->
     <div id="top-tools">
         <button class="mini-btn" id="fullscreen-btn"><i class="fa-solid fa-expand"></i></button>
         <button class="mini-btn playing" id="music-btn"><i class="fa-solid fa-pause"></i></button>
@@ -174,7 +173,6 @@
             const bookWrapper = document.getElementById('book-wrapper');
             const flipbookEl = document.getElementById('flipbook');
             
-            // Elemen UI
             const navLeft = document.getElementById('nav-left');
             const navRight = document.getElementById('nav-right');
             const bottomBar = document.getElementById('bottom-bar');
@@ -184,7 +182,6 @@
             const musicBtn = document.getElementById('music-btn');
             const fullscreenBtn = document.getElementById('fullscreen-btn');
             
-            // Audio
             const bgMusic = document.getElementById('bg-music');
             const flipSound = document.getElementById('flip-sound'); 
             
@@ -195,26 +192,20 @@
             let totalPages = 0;
             let tooltipTimeout;
 
-            // Fungsi Play Sound Kertas
             const playFlipSound = () => {
                 const sound = new Audio('flip.mp3');
                 sound.play().catch(()=>{});
             };
 
-            // Fungsi Update Tooltip Nomor Halaman
             const updateTooltip = (val) => {
                 pageTooltip.innerText = val;
                 pageTooltip.style.opacity = 1;
                 
-                // Kalkulasi posisi tooltip agar mengikuti bulatan slider
-                const percent = ((val - 1) / (totalPages - 1)) * 100;
-                // Hilangkan tooltip setelah 1.5 detik
                 clearTimeout(tooltipTimeout);
                 tooltipTimeout = setTimeout(() => { pageTooltip.style.opacity = 0; }, 1500);
             };
 
             try {
-                // Proses Membaca PDF
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
                 totalPages = pdf.numPages;
 
@@ -232,36 +223,44 @@
                     flipbookEl.appendChild(pageDiv);
                 }
 
-                // SETUP FLIPBOOK MEMAKSA 2 HALAMAN (usePortrait: false)
                 pageFlip = new St.PageFlip(flipbookEl, {
                     width: 450, height: 636, size: "stretch",
                     minWidth: 315, maxWidth: 1000, minHeight: 420, maxHeight: 1350,
                     showCover: true, mobileScrollSupport: false, usePortrait: false 
                 });
 
-                // --- LOGIKA OTOMATIS MULAI SETELAH LOADING ---
-                pageFlip.loadFromHTML(document.querySelectorAll('.page'));
-                pageSlider.max = totalPages;
-
-                // Animasi Hilang Loading Screen
-                welcomeScreen.style.opacity = 0;
+                // PERBAIKAN: Memulai animasi transisi Loading ke Buku
                 setTimeout(() => {
-                    welcomeScreen.style.display = 'none';
-                    bookWrapper.style.display = 'block';
-                    navLeft.style.display = 'flex';
-                    navRight.style.display = 'flex';
-                    bottomBar.style.display = 'flex';
-                    topTools.style.display = 'flex';
-                }, 1000);
+                    welcomeScreen.style.opacity = 0;
+                    
+                    // Setelah animasi fading selesai (1 detik)
+                    setTimeout(() => {
+                        welcomeScreen.style.display = 'none';
+                        
+                        // 1. Tampilkan Wadah Bukunya DULU
+                        bookWrapper.style.display = 'block';
+                        
+                        // 2. BARU render halaman ke dalamnya (agar ukurannya tidak nol)
+                        pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+                        pageSlider.max = totalPages;
+                        
+                        // 3. Tampilkan UI Minimalis
+                        navLeft.style.display = 'flex';
+                        navRight.style.display = 'flex';
+                        bottomBar.style.display = 'flex';
+                        topTools.style.display = 'flex';
+                        
+                    }, 1000); 
+                }, 1500); // Tunggu PDF selesai dirender, plus ekstra 1.5 detik agar loading logo terlihat elegan
 
-                // LOGIKA AUTOPLAY AUDIO (Pemicu Pertama Sentuhan)
+                // LOGIKA MUSIK: Akan menyala seketika saat user menyentuh buku/layar untuk pertama kalinya
                 const startAudio = () => {
                     if (bgMusic.paused) { bgMusic.play().catch(()=>{}); }
                 };
                 document.body.addEventListener('click', startAudio, { once: true });
                 document.body.addEventListener('touchstart', startAudio, { once: true });
 
-                // --- EVENT LISTENER UI ---
+                // EVENT LISTENER NAVIGASI
                 navLeft.addEventListener('click', () => pageFlip.flipPrev());
                 navRight.addEventListener('click', () => pageFlip.flipNext());
 
@@ -279,7 +278,6 @@
                     playFlipSound();
                 });
 
-                // Tombol Fullscreen Mini
                 fullscreenBtn.addEventListener('click', () => {
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen().catch(()=>{});
@@ -290,7 +288,6 @@
                     }
                 });
 
-                // Tombol Musik Mini
                 musicBtn.addEventListener('click', () => {
                     if (bgMusic.paused) { 
                         bgMusic.play().catch(()=>{}); 
