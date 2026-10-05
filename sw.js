@@ -1,6 +1,6 @@
-// Naikkan angka versi ini (v2 -> v3 dst.) setiap kali mengganti PDF/musik/logo
+// Naikkan angka versi ini (v3 -> v4 dst.) setiap kali mengganti PDF/musik/logo/ikon
 // dengan nama file yang sama, supaya pengunjung mendapat versi terbaru.
-const CACHE_NAME = 'ksatiara-pwa-v2';
+const CACHE_NAME = 'ksatiara-pwa-v3';
 
 const LOCAL_ASSETS = [
   './',
@@ -9,6 +9,10 @@ const LOCAL_ASSETS = [
   './music.mp3.mp3',
   './flip.mp3',
   './logo_rk.png',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
   './manifest.json'
 ];
 
