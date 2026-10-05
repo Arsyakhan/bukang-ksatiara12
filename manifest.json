@@ -1,22 +1,20 @@
 {
   "name": "Buku Angkatan Ksatiara 12",
   "short_name": "Ksatiara 12",
+  "id": "./index.html",
   "start_url": "./index.html",
+  "scope": "./",
+  "lang": "id",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#e3f2fd",
   "theme_color": "#e3f2fd",
   "icons": [
     {
-      "src": "logo_ksatiara.png",
-      "sizes": "192x192",
+      "src": "logo_rk.png",
+      "sizes": "906x596",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "logo_ksatiara.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "purpose": "any"
     }
   ]
 }
