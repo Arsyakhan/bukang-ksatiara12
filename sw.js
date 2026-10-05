@@ -1,20 +1,26 @@
-// Naikkan angka versi ini (v3 -> v4 dst.) setiap kali mengganti PDF/musik/logo/ikon
+// Naikkan angka versi ini (v4 -> v5 dst.) setiap kali mengganti PDF/musik/logo/ikon
 // dengan nama file yang sama, supaya pengunjung mendapat versi terbaru.
-const CACHE_NAME = 'ksatiara-pwa-v3';
+const CACHE_NAME = 'ksatiara-pwa-v4';
 
-const LOCAL_ASSETS = [
+// File kecil dulu (cepat), file besar belakangan satu per satu agar tidak berebut kecepatan unduh
+const SMALL_ASSETS = [
   './',
   './index.html',
-  './bukang_compressed.pdf',
-  './music.mp3.mp3',
-  './flip.mp3',
+  './manifest.json',
   './logo_rk.png',
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
   './apple-touch-icon.png',
-  './manifest.json'
+  './flip.mp3'
 ];
+const BIG_ASSETS = [
+  './bukang_compressed.pdf',
+  './music.mp3'
+];
+
+// Selalu ambil versi terbaru dari server (bukan dari cache HTTP)
+const FRESH = new Set(['./', './index.html', './manifest.json']);
 
 const CDN_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js',
@@ -24,19 +30,21 @@ const CDN_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap'
 ];
 
+async function cacheLocal(cache, url) {
+  try {
+    const res = await fetch(url, FRESH.has(url) ? { cache: 'reload' } : undefined);
+    if (res.ok) await cache.put(url, res);
+  } catch (err) {
+    console.warn('Gagal cache:', url, err);
+  }
+}
+
 // Install: simpan file satu per satu, jadi satu file gagal tidak membatalkan semuanya
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
 
-    await Promise.all(LOCAL_ASSETS.map(async url => {
-      try {
-        const res = await fetch(url, { cache: 'reload' });
-        if (res.ok) await cache.put(url, res);
-      } catch (err) {
-        console.warn('Gagal cache:', url, err);
-      }
-    }));
+    await Promise.all(SMALL_ASSETS.map(url => cacheLocal(cache, url)));
 
     await Promise.all(CDN_ASSETS.map(async url => {
       try {
@@ -46,6 +54,10 @@ self.addEventListener('install', event => {
         console.warn('Gagal cache CDN:', url, err);
       }
     }));
+
+    for (const url of BIG_ASSETS) {
+      await cacheLocal(cache, url);
+    }
   })());
   self.skipWaiting();
 });
