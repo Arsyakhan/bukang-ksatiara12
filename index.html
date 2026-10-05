@@ -35,16 +35,15 @@
             display: none; 
             margin-top: 20px; 
             width: 90vw; 
-            max-width: 950px; /* Lebar maksimal untuk mode 2 halaman */
+            max-width: 950px; 
             transition: max-width 0.4s ease-in-out;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); /* Bayangan luar buku */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
         }
-        /* Mode 1 Halaman (memaksa lebar wadah mengecil) */
         #book-wrapper.single-mode { max-width: 450px; }
         
         /* --- EFEK BUKU REALISTIS --- */
         .page { 
-            background-color: #fdfaf6; /* Warna kertas */
+            background-color: #fdfaf6; 
             border: 1px solid #999; 
             cursor: grab; 
             overflow: hidden;
@@ -54,10 +53,8 @@
         
         canvas { width: 100%; height: 100%; object-fit: fill; }
         
-        /* Bayangan Lipatan Tengah (Spine) agar mirip buku asli saat mode 2 halaman dibuka */
         .stf__item.--left .page { box-shadow: inset -15px 0 30px rgba(0,0,0,0.15) !important; }
         .stf__item.--right .page { box-shadow: inset 15px 0 30px rgba(0,0,0,0.15) !important; }
-        /* Saat halaman sedang dibalik (flip), buat bayangan lebih dinamis */
         .stf__item.--flipping .page { box-shadow: inset 0 0 20px rgba(0,0,0,0.2) !important; }
 
         /* --- KONTROL TOMBOL --- */
@@ -70,7 +67,6 @@
         }
         .controls button:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
         
-        /* Tombol Khusus */
         #layout-toggle { background: #2980b9; border-color: #2980b9; }
         #layout-toggle:hover { background: #1a5276; }
         #music-btn { background: #d35400; border-color: #d35400; }
@@ -99,7 +95,8 @@
         <button id="next-btn">Balik Kanan ➡️</button>
     </div>
 
-    <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
+    <!-- AUDIO PLAYER DIPERBARUI KE music.mp3.mp3 -->
+    <audio id="bg-music" src="music.mp3.mp3" loop preload="auto"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
@@ -118,15 +115,13 @@
             const layoutToggleBtn = document.getElementById('layout-toggle');
 
             bgMusic.volume = 0.5;
-            let isSingleMode = false; // Status mode tampilan
-            let pageFlip; // Variabel penyimpan instance buku
+            let isSingleMode = false; 
+            let pageFlip; 
 
             try {
-                // Membaca PDF
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
                 const totalPages = pdf.numPages;
 
-                // Render Canvas
                 for (let i = 1; i <= totalPages; i++) {
                     const page = await pdf.getPage(i);
                     const viewport = page.getViewport({ scale: 1.5 }); 
@@ -147,7 +142,6 @@
                 loadingDiv.style.display = 'none';
                 startBtn.style.display = 'inline-block';
 
-                // Inisialisasi Buku
                 pageFlip = new St.PageFlip(flipbookEl, {
                     width: 450, 
                     height: 636, 
@@ -156,11 +150,10 @@
                     maxWidth: 1000,
                     minHeight: 420,
                     maxHeight: 1350,
-                    showCover: true, // Menjadikan hal pertama sebagai Hardcover
+                    showCover: true, 
                     mobileScrollSupport: false 
                 });
 
-                // Klik Mulai
                 startBtn.addEventListener('click', () => {
                     startBtn.style.display = 'none';
                     document.getElementById('main-title').style.display = 'none';
@@ -172,11 +165,10 @@
 
                     bgMusic.play().catch(function(error) {
                         console.log("Musik error: ", error);
-                        alert("Ups, musik gagal diputar. Pastikan file 'music.mp3' ter-upload.");
+                        alert("Ups, musik gagal diputar. Pastikan file 'music.mp3.mp3' ter-upload dengan benar.");
                     });
                 });
 
-                // --- LOGIKA TOGGLE 1 HALAMAN / 2 HALAMAN ---
                 layoutToggleBtn.addEventListener('click', () => {
                     isSingleMode = !isSingleMode;
                     
@@ -188,13 +180,10 @@
                         layoutToggleBtn.innerText = '📄 Tampilan: 2 Halaman';
                     }
 
-                    // Trik untuk memicu library page-flip menyesuaikan ulang ukuran (re-calculate)
-                    // Diberi jeda waktu agar animasi CSS selesai sebelum resize dijalankan
                     setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
                     setTimeout(() => { window.dispatchEvent(new Event('resize')); pageFlip.update(); }, 400);
                 });
 
-                // --- TOMBOL KONTROL BAWAH ---
                 document.getElementById('prev-btn').addEventListener('click', () => pageFlip.flipPrev());
                 document.getElementById('next-btn').addEventListener('click', () => pageFlip.flipNext());
                 
