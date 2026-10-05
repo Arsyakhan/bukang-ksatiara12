@@ -20,15 +20,17 @@
         body {
             background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0; padding: 0; 
+            min-height: 100vh; margin: 0; padding: 50px 0; 
             font-family: 'Nunito', sans-serif;
-            overflow: hidden; 
+            /* Diubah menjadi auto agar bisa digeser saat buku di-zoom */
+            overflow: auto; 
             color: #2c3e50;
+            overscroll-behavior: contain;
         }
         
-        /* --- LOADING SCREEN (HANYA LOGO) --- */
+        /* --- LOADING SCREEN --- */
         #welcome-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
             z-index: 9999;
@@ -67,9 +69,9 @@
         .stf__item.--right .page { box-shadow: inset 15px 0 30px rgba(0,0,0,0.04) !important; }
         .stf__item.--flipping .page { box-shadow: inset 0 0 20px rgba(0,0,0,0.1) !important; }
 
-        /* --- UI MINIMALIS: PANAH KIRI & KANAN --- */
+        /* --- UI MINIMALIS: PANAH KIRI & KANAN (Position Fixed agar tetap melayang) --- */
         .side-nav {
-            position: absolute; top: 50%; transform: translateY(-50%);
+            position: fixed; top: 50%; transform: translateY(-50%);
             width: 45px; height: 45px; border-radius: 50%;
             background-color: #e74c3c; 
             color: white; border: none; font-size: 18px;
@@ -85,7 +87,7 @@
 
         /* --- UI MINIMALIS: SLIDER BAWAH --- */
         #bottom-bar {
-            position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
             width: 80%; max-width: 400px;
             display: none; flex-direction: column; align-items: center;
             z-index: 100;
@@ -114,9 +116,9 @@
         }
         #page-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
 
-        /* --- MINI FLOATING MENU (Pojok atas) --- */
+        /* --- MINI FLOATING MENU (Pojok atas dengan tambahan tombol Zoom) --- */
         #top-tools {
-            position: absolute; top: 15px; right: 15px;
+            position: fixed; top: 15px; right: 15px;
             display: none; gap: 10px; z-index: 100;
         }
         .mini-btn {
@@ -131,7 +133,7 @@
 </head>
 <body>
 
-    <!-- SCREEN LOADING OTOMATIS -->
+    <!-- SCREEN LOADING -->
     <div id="welcome-screen">
         <img src="logo_ksatiara.png" alt="Logo" id="loading-logo" onerror="this.src='logo_rk.png'">
     </div>
@@ -151,8 +153,12 @@
         <input type="range" id="page-slider" min="1" max="1" value="1">
     </div>
 
-    <!-- TOMBOL KECIL POJOK -->
+    <!-- TOMBOL KECIL POJOK KANAN ATAS (Sekarang dilengkapi fitur Zoom) -->
     <div id="top-tools">
+        <!-- Tombol Zoom -->
+        <button class="mini-btn" id="zoom-out-btn" title="Perkecil"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+        <button class="mini-btn" id="zoom-in-btn" title="Perbesar"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+        <!-- Tombol Layar Penuh & Musik -->
         <button class="mini-btn" id="fullscreen-btn"><i class="fa-solid fa-expand"></i></button>
         <button class="mini-btn playing" id="music-btn"><i class="fa-solid fa-pause"></i></button>
     </div>
@@ -178,6 +184,9 @@
             const topTools = document.getElementById('top-tools');
             const pageSlider = document.getElementById('page-slider');
             const pageTooltip = document.getElementById('page-tooltip');
+            
+            const zoomInBtn = document.getElementById('zoom-in-btn');
+            const zoomOutBtn = document.getElementById('zoom-out-btn');
             const musicBtn = document.getElementById('music-btn');
             const fullscreenBtn = document.getElementById('fullscreen-btn');
             
@@ -188,9 +197,8 @@
             let pageFlip; 
             let totalPages = 0;
             let tooltipTimeout;
+            let currentZoom = 1;
 
-            // SISTEM AUDIO KERTAS TERBARU
-            // Fungsi ini akan membuat suara kertas seketika memutar file flip.mp3
             const playFlipSound = () => {
                 const sound = new Audio('flip.mp3');
                 sound.volume = 1.0;
@@ -203,6 +211,20 @@
                 
                 clearTimeout(tooltipTimeout);
                 tooltipTimeout = setTimeout(() => { pageTooltip.style.opacity = 0; }, 1500);
+            };
+
+            // FUNGSI ZOOM
+            const applyZoom = () => {
+                bookWrapper.style.transform = `scale(${currentZoom})`;
+                bookWrapper.style.transformOrigin = 'top center'; 
+                
+                // Menyesuaikan margin agar halaman bisa discroll ke bawah saat diperbesar
+                if (currentZoom > 1) {
+                    const extraHeight = bookWrapper.offsetHeight * (currentZoom - 1);
+                    bookWrapper.style.marginBottom = `${extraHeight + 50}px`;
+                } else {
+                    bookWrapper.style.marginBottom = '0px';
+                }
             };
 
             try {
@@ -253,28 +275,29 @@
                 document.body.addEventListener('click', startAudio, { once: true });
                 document.body.addEventListener('touchstart', startAudio, { once: true });
 
-                // NAVIGASI TOMBOL KIRI KANAN
+                // EVENT ZOOM
+                zoomInBtn.addEventListener('click', () => { 
+                    if (currentZoom < 3) { currentZoom += 0.5; applyZoom(); } 
+                });
+                zoomOutBtn.addEventListener('click', () => { 
+                    if (currentZoom > 1) { currentZoom -= 0.5; applyZoom(); } 
+                });
+
+                // NAVIGASI
                 navLeft.addEventListener('click', () => pageFlip.flipPrev());
                 navRight.addEventListener('click', () => pageFlip.flipNext());
 
-                // NAVIGASI SLIDER BAWAH
                 pageSlider.addEventListener('input', (e) => {
                     const pageNum = parseInt(e.target.value, 10);
-                    pageFlip.turnToPage(pageNum - 1); // StPageFlip menggunakan index dari 0
+                    pageFlip.turnToPage(pageNum - 1); 
                     updateTooltip(pageNum);
-                    // Panggilan suara kertas jika digeser lewat slider
                     playFlipSound(); 
                 });
 
-                // --- INI KUNCINYA ---
-                // Event bawaan StPageFlip: Membaca secara akurat kapanpun buku dibalik
-                // baik lewat kursor ditarik, tombol next, atau sapuan jari di HP
                 pageFlip.on('flip', (e) => {
                     const currentPage = e.data + 1;
                     pageSlider.value = currentPage;
                     updateTooltip(currentPage);
-                    
-                    // Panggilan suara kertas langsung dieksekusi di sini
                     playFlipSound();
                 });
 
