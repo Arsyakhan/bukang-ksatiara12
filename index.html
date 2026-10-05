@@ -48,20 +48,24 @@
             padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
         }
 
-        /* --- LOADING SCREEN --- */
+        /* --- LOADING SCREEN + PROGRES --- */
         #welcome-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
             z-index: 9999;
-            transition: opacity 1s ease-in-out;
+            transition: opacity 0.5s ease-in-out;
         }
+        .load-box { display: flex; flex-direction: column; align-items: center; gap: 14px; }
         #loading-logo { width: 150px; max-width: 40vw; animation: pulse-logo 2s infinite ease-in-out; }
         @keyframes pulse-logo {
             0%   { transform: scale(1);   filter: drop-shadow(0 0 10px rgba(25, 118, 210, 0.2)); }
             50%  { transform: scale(1.1); filter: drop-shadow(0 0 25px rgba(25, 118, 210, 0.6)); }
             100% { transform: scale(1);   filter: drop-shadow(0 0 10px rgba(25, 118, 210, 0.2)); }
         }
+        #load-text { font-size: 13px; font-weight: 700; color: #636e72; }
+        #load-bar { width: 180px; height: 6px; border-radius: 6px; background: rgba(45, 52, 54, 0.15); overflow: hidden; }
+        #load-fill { width: 0; height: 100%; background: #e0574f; border-radius: 6px; transition: width 0.3s ease; }
 
         /* --- LOGO POJOK KIRI BAWAH --- */
         #brand-logo {
@@ -121,7 +125,7 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; z-index: 20;
             box-shadow: 0 3px 10px rgba(224, 87, 79, 0.45);
-            transition: transform 0.15s;
+            transition: transform 0.15s, opacity 0.3s, visibility 0.3s;
         }
         .nav-arrow:hover { transform: scale(1.1); }
         .nav-arrow.hidden { display: none; }
@@ -136,6 +140,7 @@
         #bottom-bar {
             position: fixed; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
             width: min(840px, 80vw); display: none; z-index: 100;
+            transition: opacity 0.3s, visibility 0.3s;
         }
         @media (max-height: 500px) { #bottom-bar { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); } }
         #slider-track {
@@ -178,6 +183,7 @@
             display: none; flex-wrap: wrap; justify-content: flex-end; gap: 10px; z-index: 100;
             padding: 8px 10px; background: #fff; border-radius: 8px;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+            transition: opacity 0.3s, visibility 0.3s;
         }
         .tool-btn {
             width: 34px; height: 34px; border-radius: 50%; border: none; color: #fff;
@@ -190,10 +196,62 @@
         .bg-teal { background: #2fbfa8; } .bg-dark { background: #3b4a5c; }
         .bg-purple { background: #8e6bd1; } .bg-orange { background: #f2994a; }
         .bg-pink { background: #e8629a; } .bg-green { background: #43a047; }
+        .bg-cyan { background: #00acc1; } .bg-slate { background: #78909c; }
+        .bg-grey { background: #607d8b; } .bg-ink { background: #455a64; }
         #music-btn.playing { box-shadow: 0 0 0 3px rgba(232, 98, 154, 0.35); }
-        @media (max-width: 480px) {
-            #top-tools { gap: 6px; padding: 6px 8px; }
-            .tool-btn { width: 32px; height: 32px; font-size: 14px; }
+
+        /* Tombol menu "⋯" hanya di layar kecil */
+        #more-btn { display: none; }
+        @media (max-width: 700px), (max-height: 500px) {
+            .tool-btn.sec { display: none !important; }
+            #more-btn { display: flex; }
+            #top-tools { gap: 8px; padding: 6px 8px; }
+            .tool-btn { width: 42px; height: 42px; font-size: 16px; }
+        }
+
+        /* Menu "⋯" */
+        #more-menu {
+            display: none; position: absolute; top: calc(100% + 8px); right: 0; min-width: 260px;
+            background: #fff; border-radius: 12px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+        #more-menu.open { display: block; }
+        .menu-item {
+            display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px;
+            border: none; background: none; border-radius: 8px; font-family: inherit;
+            font-size: 14px; font-weight: 700; color: #2c3e50; cursor: pointer; text-align: left;
+        }
+        .menu-item:hover { background: #f1f3f4; }
+        .menu-item i { width: 20px; text-align: center; color: #636e72; }
+
+        /* --- MODE BACA (sembunyikan semua menu) --- */
+        body.immersive #top-tools, body.immersive #bottom-bar, body.immersive #brand-logo,
+        body.immersive .nav-arrow, body.immersive #install-sheet, body.immersive #toast {
+            opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;
+        }
+        #ui-restore {
+            display: none; position: fixed;
+            top: calc(12px + env(safe-area-inset-top, 0px));
+            right: calc(12px + env(safe-area-inset-right, 0px));
+            width: 42px; height: 42px; border-radius: 50%; border: none;
+            background: rgba(45, 52, 54, 0.55); color: #fff; font-size: 16px;
+            align-items: center; justify-content: center; cursor: pointer; z-index: 100;
+        }
+        body.immersive #ui-restore { display: flex; }
+
+        /* --- TOAST --- */
+        #toast {
+            position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+            transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+            display: flex; align-items: center; gap: 14px; max-width: min(92vw, 420px);
+            background: rgba(45, 52, 54, 0.95); color: #fff; padding: 11px 16px; border-radius: 12px;
+            font-size: 14px; font-weight: 700; z-index: 150;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        #toast.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+        #toast-action {
+            border: none; background: none; color: #ffd54f; font-weight: 800; font-family: inherit;
+            font-size: 14px; cursor: pointer; padding: 0; white-space: nowrap;
         }
 
         /* --- POPUP AJAKAN PASANG APLIKASI --- */
@@ -223,7 +281,7 @@
             #install-sheet.show { transform: translateY(0); }
         }
 
-        /* --- POPUP (share & petunjuk iOS) --- */
+        /* --- POPUP (share, simpan gambar, bantuan, petunjuk iOS) --- */
         .modal {
             display: none; position: fixed; inset: 0; z-index: 10000;
             background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 16px;
@@ -232,13 +290,21 @@
         .modal-card {
             position: relative; width: min(92vw, 380px); background: #fff; border-radius: 16px;
             padding: 22px 20px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto;
         }
-        .modal-card h3 { margin: 0 0 16px; font-size: 18px; }
+        .modal-card h3 { margin: 0 0 16px; font-size: 18px; padding-right: 24px; }
         .modal-close {
             position: absolute; top: 10px; right: 12px; border: none; background: none;
             font-size: 26px; line-height: 1; cursor: pointer; color: #636e72;
         }
         .how-to { margin: 0; padding-left: 20px; line-height: 1.7; font-size: 14px; }
+        .help-list { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.45; }
+        .help-list li { display: flex; gap: 12px; align-items: flex-start; }
+        .help-list i { width: 22px; text-align: center; color: #e0574f; margin-top: 2px; }
+        .wide-btn {
+            width: 100%; border: none; background: #e0574f; color: #fff; font-weight: 800; font-family: inherit;
+            font-size: 15px; padding: 12px; border-radius: 10px; cursor: pointer;
+        }
         .share-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
         .share-item {
             display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -257,6 +323,27 @@
             border: none; background: #e0574f; color: #fff; font-weight: 700; font-family: inherit;
             padding: 0 14px; border-radius: 8px; cursor: pointer;
         }
+
+        /* Simpan halaman sebagai gambar */
+        .save-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .chip {
+            border: 2px solid #e0574f; background: #fff; color: #e0574f; font-weight: 800; font-family: inherit;
+            font-size: 13px; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+        }
+        .chip.active { background: #e0574f; color: #fff; }
+        .save-status { font-size: 13px; color: #636e72; font-weight: 700; min-height: 18px; }
+        #save-preview {
+            display: block; max-width: 100%; max-height: 38vh; margin: 8px auto 12px;
+            border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+        }
+        .save-actions { display: flex; gap: 8px; }
+        .save-actions button {
+            flex: 1; border: none; border-radius: 10px; padding: 11px; font-weight: 800;
+            font-family: inherit; font-size: 14px; cursor: pointer; color: #fff;
+        }
+        #save-share { background: #25d366; }
+        #save-download { background: #5aa9d6; }
+        #save-hint { font-size: 12px; color: #636e72; margin: 10px 0 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -264,7 +351,11 @@
 
     <!-- SCREEN LOADING -->
     <div id="welcome-screen">
-        <img src="logo_rk.png" alt="Logo Rumah Kepemimpinan" id="loading-logo">
+        <div class="load-box">
+            <img src="logo_rk.png" alt="Logo Rumah Kepemimpinan" id="loading-logo">
+            <div id="load-text">Memuat buku…</div>
+            <div id="load-bar"><div id="load-fill"></div></div>
+        </div>
     </div>
 
     <!-- LOGO POJOK KIRI BAWAH -->
@@ -295,16 +386,40 @@
         </div>
     </div>
 
-    <!-- TOOLBAR -->
+    <!-- TOOLBAR (tombol "sec" disembunyikan di layar kecil dan pindah ke menu ⋯) -->
     <div id="top-tools">
         <button class="tool-btn bg-red" id="share-btn" title="Bagikan" aria-label="Bagikan"><i class="fa-solid fa-share-nodes"></i></button>
-        <button class="tool-btn bg-blue" id="print-btn" title="Cetak / unduh PDF" aria-label="Cetak atau unduh PDF"><i class="fa-solid fa-print"></i></button>
+        <button class="tool-btn sec bg-cyan" id="save-btn" title="Simpan halaman sebagai gambar" aria-label="Simpan halaman sebagai gambar"><i class="fa-solid fa-image"></i></button>
+        <button class="tool-btn sec bg-blue" id="pdf-btn" title="Unduh PDF" aria-label="Unduh PDF"><i class="fa-solid fa-file-pdf"></i></button>
         <button class="tool-btn bg-teal" id="zoom-btn" title="Perbesar" aria-label="Perbesar"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
-        <button class="tool-btn bg-dark" id="fullscreen-btn" title="Layar penuh" aria-label="Layar penuh"><i class="fa-solid fa-expand"></i></button>
-        <button class="tool-btn bg-purple" id="view-btn" title="Tampilan 1 halaman" aria-label="Ganti tampilan 1 atau 2 halaman"><i class="fa-solid fa-file"></i></button>
-        <button class="tool-btn bg-orange" id="sound-btn" title="Suara balik halaman" aria-label="Suara balik halaman"><i class="fa-solid fa-volume-high"></i></button>
+        <button class="tool-btn sec bg-dark" id="fullscreen-btn" title="Layar penuh" aria-label="Layar penuh"><i class="fa-solid fa-expand"></i></button>
+        <button class="tool-btn sec bg-purple" id="view-btn" title="Tampilan 1 halaman" aria-label="Ganti tampilan 1 atau 2 halaman"><i class="fa-solid fa-file"></i></button>
+        <button class="tool-btn sec bg-slate" id="immersive-btn" title="Mode baca (sembunyikan menu)" aria-label="Mode baca"><i class="fa-solid fa-eye-slash"></i></button>
+        <button class="tool-btn sec bg-orange" id="sound-btn" title="Suara balik halaman" aria-label="Suara balik halaman"><i class="fa-solid fa-volume-high"></i></button>
         <button class="tool-btn bg-pink" id="music-btn" title="Musik" aria-label="Musik"><i class="fa-solid fa-music"></i></button>
-        <button class="tool-btn bg-green" id="install-btn" title="Pasang sebagai aplikasi" aria-label="Pasang sebagai aplikasi" style="display:none"><i class="fa-solid fa-mobile-screen-button"></i></button>
+        <button class="tool-btn sec bg-green" id="install-btn" title="Pasang sebagai aplikasi" aria-label="Pasang sebagai aplikasi" style="display:none"><i class="fa-solid fa-mobile-screen-button"></i></button>
+        <button class="tool-btn sec bg-grey" id="help-btn" title="Cara menggunakan" aria-label="Cara menggunakan"><i class="fa-solid fa-question"></i></button>
+        <button class="tool-btn bg-ink" id="more-btn" title="Menu lainnya" aria-label="Menu lainnya"><i class="fa-solid fa-ellipsis"></i></button>
+
+        <div id="more-menu" role="menu">
+            <button class="menu-item" id="m-save"><i class="fa-solid fa-image"></i><span>Simpan halaman sebagai gambar</span></button>
+            <button class="menu-item" id="m-pdf"><i class="fa-solid fa-file-pdf"></i><span>Unduh PDF</span></button>
+            <button class="menu-item" id="m-fs"><i class="fa-solid fa-expand"></i><span>Layar penuh</span></button>
+            <button class="menu-item" id="m-view"><i class="fa-solid fa-file" id="m-view-icon"></i><span id="m-view-label">Tampilan 1 halaman</span></button>
+            <button class="menu-item" id="m-immersive"><i class="fa-solid fa-eye-slash"></i><span>Mode baca (sembunyikan menu)</span></button>
+            <button class="menu-item" id="m-sound"><i class="fa-solid fa-volume-high" id="m-sound-icon"></i><span id="m-sound-label">Suara balik halaman: nyala</span></button>
+            <button class="menu-item" id="m-install" style="display:none"><i class="fa-solid fa-mobile-screen-button"></i><span>Pasang sebagai aplikasi</span></button>
+            <button class="menu-item" id="m-help"><i class="fa-solid fa-circle-question"></i><span>Cara menggunakan</span></button>
+        </div>
+    </div>
+
+    <!-- TOMBOL KEMBALIKAN MENU (saat mode baca) -->
+    <button id="ui-restore" title="Tampilkan menu" aria-label="Tampilkan menu"><i class="fa-solid fa-eye"></i></button>
+
+    <!-- TOAST -->
+    <div id="toast" role="status">
+        <span id="toast-text"></span>
+        <button id="toast-action"></button>
     </div>
 
     <!-- POPUP AJAKAN PASANG APLIKASI -->
@@ -320,6 +435,40 @@
         <div class="is-actions">
             <button id="is-install">Pasang</button>
             <button id="is-later">Nanti</button>
+        </div>
+    </div>
+
+    <!-- POPUP BANTUAN / PETUNJUK PERTAMA KALI -->
+    <div class="modal" id="help-modal">
+        <div class="modal-card">
+            <button class="modal-close" aria-label="Tutup">&times;</button>
+            <h3>Cara menggunakan</h3>
+            <ul class="help-list">
+                <li><i class="fa-solid fa-hand-pointer"></i><span><b>Balik halaman:</b> geser halaman atau ketuk tepinya.</span></li>
+                <li><i class="fa-solid fa-magnifying-glass-plus"></i><span><b>Perbesar:</b> cubit dengan dua jari, lalu seret satu jari untuk menggeser.</span></li>
+                <li><i class="fa-solid fa-sliders"></i><span><b>Lompat halaman:</b> seret garis di bawah, pratinjau halaman akan muncul.</span></li>
+                <li><i class="fa-solid fa-image"></i><span><b>Simpan halaman:</b> jadikan gambar untuk dibagikan, lewat tombol ⋯ atau ikon gambar.</span></li>
+                <li><i class="fa-solid fa-eye-slash"></i><span><b>Mode baca:</b> sembunyikan semua menu, ketuk ikon mata untuk menampilkannya lagi.</span></li>
+            </ul>
+            <button class="wide-btn" id="help-ok">Mengerti</button>
+        </div>
+    </div>
+
+    <!-- POPUP SIMPAN HALAMAN SEBAGAI GAMBAR -->
+    <div class="modal" id="save-modal">
+        <div class="modal-card">
+            <button class="modal-close" aria-label="Tutup">&times;</button>
+            <h3>Simpan halaman sebagai gambar</h3>
+            <div class="save-choices" id="save-choices"></div>
+            <div class="save-status" id="save-status"></div>
+            <div id="save-result" style="display:none">
+                <img id="save-preview" alt="Pratinjau gambar halaman">
+                <div class="save-actions">
+                    <button id="save-share"><i class="fa-solid fa-share-nodes"></i> Bagikan</button>
+                    <button id="save-download"><i class="fa-solid fa-download"></i> Unduh</button>
+                </div>
+                <p id="save-hint" style="display:none">Di iPhone: tekan lama gambar di atas, lalu pilih "Simpan ke Foto".</p>
+            </div>
         </div>
     </div>
 
@@ -362,8 +511,8 @@
         </div>
     </div>
 
-    <!-- AUDIO -->
-    <audio id="bg-music" src="music.mp3.mp3" loop preload="auto"></audio>
+    <!-- AUDIO (diunduh hanya saat pertama kali diputar) -->
+    <audio id="bg-music" src="music.mp3" loop preload="none"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
@@ -380,6 +529,17 @@
         // Cegah zoom bawaan Safari iOS (kita pakai pinch sendiri)
         ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev =>
             document.addEventListener(ev, (e) => e.preventDefault()));
+
+        // Service worker didaftarkan SETELAH buku tampil, supaya tidak berebut kecepatan unduh dengan PDF
+        let swRegistered = false;
+        function registerServiceWorker() {
+            if (swRegistered || !('serviceWorker' in navigator)) return;
+            swRegistered = true;
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('PWA aktif!', reg.scope))
+                .catch(err => console.log('PWA gagal: ', err));
+        }
+        window.addEventListener('load', () => setTimeout(registerServiceWorker, 15000)); // jaring pengaman
 
         document.addEventListener("DOMContentLoaded", async () => {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -401,6 +561,8 @@
             const $ = (id) => document.getElementById(id);
             const root = document.documentElement;
             const welcomeScreen = $('welcome-screen');
+            const loadFill = $('load-fill');
+            const loadText = $('load-text');
             const brandLogo = $('brand-logo');
             const safeProbe = $('safe-probe');
             const zoomStage = $('zoom-stage');
@@ -419,13 +581,19 @@
             const pvLabel = $('pv-label');
             const topTools = $('top-tools');
             const shareBtn = $('share-btn');
-            const printBtn = $('print-btn');
+            const saveBtn = $('save-btn');
+            const pdfBtn = $('pdf-btn');
             const zoomBtn = $('zoom-btn');
             const fullscreenBtn = $('fullscreen-btn');
             const viewBtn = $('view-btn');
+            const immersiveBtn = $('immersive-btn');
             const soundBtn = $('sound-btn');
             const musicBtn = $('music-btn');
             const installBtn = $('install-btn');
+            const helpBtn = $('help-btn');
+            const moreBtn = $('more-btn');
+            const moreMenu = $('more-menu');
+            const uiRestore = $('ui-restore');
             const bgMusic = $('bg-music');
             bgMusic.volume = 0.5;
 
@@ -443,6 +611,11 @@
             const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
             const setThumb = (ratio) => { sliderThumb.style.left = (ratio * (100 - THUMB_PCT)) + '%'; };
             const anyModalOpen = () => !!document.querySelector('.modal.open');
+            const setLoad = (pct, text) => {
+                loadFill.style.width = pct + '%';
+                if (text) loadText.textContent = text;
+            };
+            setLoad(5, 'Memuat buku…');
 
             // Mode tampilan: 2 = dua halaman, 1 = satu halaman (pilihan diingat)
             let viewMode = 2;
@@ -456,7 +629,25 @@
             let flipForward = () => {};
             let flipBackward = () => {};
             let goToIndex = () => {};
+            let rebuildBook = () => {};
+            let openSave = () => {};
             let onZoomSettled = () => {};
+
+            // ---------- MENU "⋯" ----------
+            const closeMenu = () => moreMenu.classList.remove('open');
+            moreBtn.addEventListener('click', () => moreMenu.classList.toggle('open'));
+            document.addEventListener('click', (e) => {
+                if (!moreMenu.contains(e.target) && !moreBtn.contains(e.target)) closeMenu();
+            });
+            const bindMenu = (menuId, btn) => $(menuId).addEventListener('click', () => { closeMenu(); btn.click(); });
+            bindMenu('m-save', saveBtn);
+            bindMenu('m-pdf', pdfBtn);
+            bindMenu('m-fs', fullscreenBtn);
+            bindMenu('m-view', viewBtn);
+            bindMenu('m-immersive', immersiveBtn);
+            bindMenu('m-sound', soundBtn);
+            bindMenu('m-install', installBtn);
+            bindMenu('m-help', helpBtn);
 
             // ---------- SUARA KERTAS ----------
             const flipAudio = new Audio('flip.mp3');
@@ -476,6 +667,8 @@
                     : '<i class="fa-solid fa-volume-xmark"></i>';
                 soundBtn.classList.toggle('off', !flipSoundOn);
                 soundBtn.title = flipSoundOn ? 'Matikan suara balik halaman' : 'Nyalakan suara balik halaman';
+                $('m-sound-icon').className = flipSoundOn ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+                $('m-sound-label').textContent = flipSoundOn ? 'Suara balik halaman: nyala' : 'Suara balik halaman: mati';
             };
             updateSoundBtn();
             soundBtn.addEventListener('click', () => {
@@ -588,6 +781,14 @@
             setMusicUI(false);
             bgMusic.addEventListener('play', () => setMusicUI(true));
             bgMusic.addEventListener('pause', () => setMusicUI(false));
+            // Jaring pengaman: kalau music.mp3 belum diupload, pakai nama file lama
+            bgMusic.addEventListener('error', () => {
+                if (!bgMusic.dataset.fallback) {
+                    bgMusic.dataset.fallback = '1';
+                    bgMusic.src = 'music.mp3.mp3';
+                    bgMusic.load();
+                }
+            });
             musicBtn.addEventListener('click', () => {
                 if (bgMusic.paused) { bgMusic.play().catch(() => {}); }
                 else { bgMusic.pause(); }
@@ -612,6 +813,7 @@
             };
             if (!reqFs) {
                 fullscreenBtn.style.display = 'none';
+                $('m-fs').style.display = 'none';
             } else {
                 fullscreenBtn.addEventListener('click', () => {
                     if (!getFsEl()) {
@@ -625,20 +827,48 @@
                 document.addEventListener('webkitfullscreenchange', syncFsIcon);
             }
 
-            // ---------- CETAK / UNDUH ----------
-            printBtn.addEventListener('click', () => window.open(pdfUrl, '_blank'));
+            // ---------- UNDUH PDF ----------
+            pdfBtn.addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = pdfUrl;
+                a.download = 'Buku-Angkatan-Ksatiara-12.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            });
 
             // ---------- TOMBOL GANTI TAMPILAN ----------
             const updateViewBtn = () => {
-                if (viewMode === 2) {
-                    viewBtn.innerHTML = '<i class="fa-solid fa-file"></i>';
-                    viewBtn.title = 'Tampilan 1 halaman';
-                } else {
-                    viewBtn.innerHTML = '<i class="fa-solid fa-book-open"></i>';
-                    viewBtn.title = 'Tampilan 2 halaman';
-                }
+                const toSingle = viewMode === 2;
+                viewBtn.innerHTML = toSingle
+                    ? '<i class="fa-solid fa-file"></i>'
+                    : '<i class="fa-solid fa-book-open"></i>';
+                viewBtn.title = toSingle ? 'Tampilan 1 halaman' : 'Tampilan 2 halaman';
+                $('m-view-icon').className = toSingle ? 'fa-solid fa-file' : 'fa-solid fa-book-open';
+                $('m-view-label').textContent = toSingle ? 'Tampilan 1 halaman' : 'Tampilan 2 halaman';
             };
             updateViewBtn();
+
+            // ---------- MODE BACA ----------
+            const setImmersive = (on) => {
+                document.body.classList.toggle('immersive', on);
+                closeMenu();
+                rebuildBook(); // buku dibesarkan memakai ruang yang dikosongkan menu
+            };
+            immersiveBtn.addEventListener('click', () => setImmersive(true));
+            uiRestore.addEventListener('click', () => setImmersive(false));
+
+            // ---------- BANTUAN / PETUNJUK PERTAMA KALI ----------
+            const helpModal = $('help-modal');
+            helpBtn.addEventListener('click', () => helpModal.classList.add('open'));
+            $('help-ok').addEventListener('click', () => helpModal.classList.remove('open'));
+            const maybeShowOnboarding = () => {
+                let seen = false;
+                try { seen = localStorage.getItem('bukang_onboarded') === '1'; } catch (e) {}
+                if (seen) return;
+                try { localStorage.setItem('bukang_onboarded', '1'); } catch (e) {}
+                helpModal.classList.add('open');
+            };
 
             // ---------- PASANG SEBAGAI APLIKASI ----------
             const installModal = $('install-modal');
@@ -648,6 +878,7 @@
             const isLaterBtn = $('is-later');
             const DISMISS_KEY = 'bukang_install_dismissed';
             let installSheetShown = false;
+            let toastVisible = false;
 
             const isStandalone = () =>
                 window.matchMedia('(display-mode: standalone)').matches ||
@@ -663,7 +894,9 @@
                 } catch (e) { return false; }
             };
             const updateInstallBtn = () => {
-                installBtn.style.display = (!isStandalone() && (deferredInstallPrompt || isIOS())) ? 'flex' : 'none';
+                const show = !isStandalone() && (deferredInstallPrompt || isIOS());
+                installBtn.style.display = show ? 'flex' : 'none';
+                $('m-install').style.display = show ? 'flex' : 'none';
             };
             const hideInstallSheet = (remember) => {
                 installSheet.classList.remove('show');
@@ -672,6 +905,8 @@
             const maybeShowInstallSheet = () => {
                 if (installSheetShown || !bookRevealed || !IS_TOUCH || isStandalone() || dismissedRecently()) return;
                 if (!(deferredInstallPrompt || isIOS())) return;
+                // Tunggu sampai toast / popup lain / mode baca selesai
+                if (toastVisible || anyModalOpen() || document.body.classList.contains('immersive')) return;
                 installSheetShown = true;
                 if (deferredInstallPrompt) {
                     isDesc.textContent = 'Buka buku ini langsung dari layar utama HP, layar penuh tanpa tampilan browser.';
@@ -708,9 +943,47 @@
             });
             isLaterBtn.addEventListener('click', () => hideInstallSheet(true));
 
+            // ---------- TOAST ----------
+            const toast = $('toast');
+            const toastText = $('toast-text');
+            const toastAction = $('toast-action');
+            let toastTimer = null;
+            let toastActionFn = null;
+            const hideToast = () => {
+                clearTimeout(toastTimer);
+                toast.classList.remove('show');
+                const was = toastVisible;
+                toastVisible = false;
+                if (was) setTimeout(maybeShowInstallSheet, 400);
+            };
+            const showToast = (text, actionLabel, actionFn, ms = 6000) => {
+                toastText.textContent = text;
+                if (actionLabel) {
+                    toastAction.textContent = actionLabel;
+                    toastAction.style.display = 'inline';
+                    toastActionFn = actionFn;
+                } else {
+                    toastAction.style.display = 'none';
+                    toastActionFn = null;
+                }
+                toast.classList.add('show');
+                toastVisible = true;
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(hideToast, ms);
+            };
+            toastAction.addEventListener('click', () => {
+                const fn = toastActionFn;
+                hideToast();
+                if (fn) fn();
+            });
+
             // ---------- POPUP: tutup lewat tombol X / klik latar / Escape ----------
+            const modalObserver = new MutationObserver(() => {
+                if (!anyModalOpen()) setTimeout(maybeShowInstallSheet, 600);
+            });
             document.querySelectorAll('.modal').forEach(m => {
                 m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); });
+                modalObserver.observe(m, { attributes: true, attributeFilter: ['class'] });
             });
             document.querySelectorAll('.modal-close').forEach(b => {
                 b.addEventListener('click', () => b.closest('.modal').classList.remove('open'));
@@ -767,11 +1040,48 @@
                 });
             }
 
+            // ---------- SIMPAN HALAMAN SEBAGAI GAMBAR (bagian tombol) ----------
+            const saveModal = $('save-modal');
+            const saveChoices = $('save-choices');
+            const saveStatus = $('save-status');
+            const saveResult = $('save-result');
+            const savePreview = $('save-preview');
+            const saveShareBtn = $('save-share');
+            const saveDownloadBtn = $('save-download');
+            let saveUrl = null;
+            let saveFile = null;
+
+            const canShareFiles = (() => {
+                try {
+                    const f = new File([new Blob(['x'], { type: 'image/jpeg' })], 'a.jpg', { type: 'image/jpeg' });
+                    return !!(navigator.canShare && navigator.canShare({ files: [f] }));
+                } catch (e) { return false; }
+            })();
+
+            saveBtn.addEventListener('click', () => openSave());
+            saveShareBtn.addEventListener('click', () => {
+                if (!saveFile) return;
+                navigator.share({ files: [saveFile], title: BOOK_TITLE }).catch(() => {});
+            });
+            saveDownloadBtn.addEventListener('click', () => {
+                if (!saveUrl || !saveFile) return;
+                const a = document.createElement('a');
+                a.href = saveUrl;
+                a.download = saveFile.name;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            });
+
             // ---------- KEYBOARD ----------
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && anyModalOpen()) {
-                    document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
-                    return;
+                if (e.key === 'Escape') {
+                    if (anyModalOpen()) {
+                        document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+                        return;
+                    }
+                    if (moreMenu.classList.contains('open')) { closeMenu(); return; }
+                    if (document.body.classList.contains('immersive')) { setImmersive(false); return; }
                 }
                 if (!pageFlip || anyModalOpen()) return;
                 const tag = (e.target && e.target.tagName) || '';
@@ -784,8 +1094,13 @@
             navNext.addEventListener('click', () => flipForward());
 
             try {
-                // ---------- LOAD PDF ----------
-                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                // ---------- LOAD PDF (dengan progres) ----------
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                loadingTask.onProgress = (p) => {
+                    if (p && p.total) setLoad(Math.max(5, Math.round(p.loaded / p.total * 80)));
+                };
+                const pdf = await loadingTask.promise;
+                setLoad(85, 'Menyiapkan halaman…');
                 totalPages = pdf.numPages;
 
                 const firstPage = await pdf.getPage(1);
@@ -841,7 +1156,6 @@
                 let updateToken = 0;
                 const pause = (ms) => new Promise(r => setTimeout(r, ms));
 
-                // Lebar render yang dibutuhkan: halaman yang terlihat dirender lebih besar saat di-zoom
                 const desiredWidth = (idx) => {
                     if (currentZoom > 1.3 && spreadPages(spreadStart(currentIdx())).includes(idx)) {
                         const across = viewMode === 2 ? 2 : 1;
@@ -861,7 +1175,6 @@
                         const page = await pdf.getPage(idx + 1);
                         const base = page.getViewport({ scale: 1 });
                         const viewport = page.getViewport({ scale: targetW / base.width });
-                        // Render ke canvas sementara agar halaman tidak berkedip kosong
                         const off = document.createElement('canvas');
                         off.width = Math.floor(viewport.width);
                         off.height = Math.floor(viewport.height);
@@ -871,7 +1184,6 @@
                         canvas.height = off.height;
                         canvas.getContext('2d').drawImage(off, 0, 0);
                         renderedWidth.set(idx, off.width);
-                        // Kalau kebutuhan berubah selama merender, ulangi
                         if (Math.abs(desiredWidth(idx) - off.width) > 8) scheduleUpdate(currentIdx(), 120);
                         return true;
                     } catch (err) {
@@ -939,7 +1251,90 @@
                     return c;
                 });
 
-                // Terapkan tampilan sesuai halaman: geser cover ke tengah, tumpukan halaman, panah, slider, link
+                // ---------- SIMPAN HALAMAN SEBAGAI GAMBAR (proses) ----------
+                const makePageCanvas = async (idx, width) => {
+                    const page = await pdf.getPage(idx + 1);
+                    const base = page.getViewport({ scale: 1 });
+                    const vp = page.getViewport({ scale: width / base.width });
+                    const c = document.createElement('canvas');
+                    c.width = Math.floor(vp.width);
+                    c.height = Math.floor(vp.height);
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, c.width, c.height);
+                    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+                    return c;
+                };
+
+                let saveToken = 0;
+                const resetSaveResult = () => {
+                    saveToken++;
+                    if (saveUrl) { try { URL.revokeObjectURL(saveUrl); } catch (e) {} }
+                    saveUrl = null;
+                    saveFile = null;
+                    savePreview.removeAttribute('src');
+                    saveResult.style.display = 'none';
+                    saveStatus.textContent = '';
+                };
+
+                const makeImage = async (opt, chip) => {
+                    resetSaveResult();
+                    const token = saveToken;
+                    [...saveChoices.children].forEach(c => c.classList.toggle('active', c === chip));
+                    saveStatus.textContent = 'Menyiapkan gambar…';
+                    try {
+                        const w = opt.pages.length === 1 ? 1600 : 1200;
+                        const parts = [];
+                        for (const p of opt.pages) parts.push(await makePageCanvas(p, w));
+                        let out = parts[0];
+                        if (parts.length > 1) {
+                            out = document.createElement('canvas');
+                            out.width = parts[0].width + parts[1].width;
+                            out.height = Math.max(parts[0].height, parts[1].height);
+                            const ctx = out.getContext('2d');
+                            ctx.fillStyle = '#fff';
+                            ctx.fillRect(0, 0, out.width, out.height);
+                            ctx.drawImage(parts[0], 0, 0);
+                            ctx.drawImage(parts[1], parts[0].width, 0);
+                        }
+                        const blob = await new Promise(res => out.toBlob(res, 'image/jpeg', 0.92));
+                        if (token !== saveToken) return;
+                        if (!blob) throw new Error('Gambar kosong');
+                        const name = opt.pages.length === 1
+                            ? `Ksatiara12-halaman-${opt.pages[0] + 1}.jpg`
+                            : `Ksatiara12-halaman-${opt.pages[0] + 1}-${opt.pages[1] + 1}.jpg`;
+                        saveFile = new File([blob], name, { type: 'image/jpeg' });
+                        saveUrl = URL.createObjectURL(blob);
+                        savePreview.src = saveUrl;
+                        saveStatus.textContent = '';
+                        saveResult.style.display = 'block';
+                        saveShareBtn.style.display = canShareFiles ? 'block' : 'none';
+                        $('save-hint').style.display = isIOS() ? 'block' : 'none';
+                    } catch (err) {
+                        console.error(err);
+                        if (token === saveToken) saveStatus.textContent = 'Gagal menyiapkan gambar. Coba lagi.';
+                    }
+                };
+
+                openSave = () => {
+                    if (!pageFlip) return;
+                    const pages = spreadPages(spreadStart(currentIdx()));
+                    const options = pages.map(p => ({ label: `Halaman ${p + 1}`, pages: [p] }));
+                    if (pages.length === 2) options.push({ label: 'Kedua halaman', pages });
+                    saveChoices.innerHTML = '';
+                    resetSaveResult();
+                    options.forEach(o => {
+                        const b = document.createElement('button');
+                        b.className = 'chip';
+                        b.textContent = o.label;
+                        b.addEventListener('click', () => makeImage(o, b));
+                        saveChoices.appendChild(b);
+                    });
+                    saveModal.classList.add('open');
+                    if (options.length === 1) saveChoices.firstChild.click();
+                };
+
+                // ---------- STATE BUKU ----------
                 const applyBookState = (idx) => {
                     idx = clamp(idx, 0, totalPages - 1);
                     currentPageNum = idx + 1;
@@ -965,6 +1360,7 @@
                     sliderTrack.setAttribute('aria-valuenow', idx + 1);
                     sliderTrack.setAttribute('aria-valuemax', totalPages);
                     try { history.replaceState(null, '', '#page/' + (idx + 1)); } catch (e) {}
+                    try { localStorage.setItem('bukang_last_page', String(idx + 1)); } catch (e) {} // untuk "lanjut membaca"
                 };
 
                 let syncTimer;
@@ -1014,8 +1410,9 @@
                     const sB = parseFloat(cs.paddingBottom) || 0;
                     const sL = parseFloat(cs.paddingLeft) || 0;
                     const sR = parseFloat(cs.paddingRight) || 0;
+                    const immersive = document.body.classList.contains('immersive');
                     const padTop = 10 + sT;
-                    const padBottom = (window.innerHeight < 500 ? 52 : 78) + sB;
+                    const padBottom = (immersive ? 10 : (window.innerHeight < 500 ? 52 : 78)) + sB;
                     root.style.setProperty('--pad-top', padTop + 'px');
                     root.style.setProperty('--pad-bottom', padBottom + 'px');
 
@@ -1079,6 +1476,7 @@
                     requestAnimationFrame(applyZoom);
                     scheduleUpdate(startIdx, 50);
                 };
+                rebuildBook = () => { if (pageFlip) buildBook(currentIdx()); };
 
                 // ---------- PRATINJAU SLIDER ----------
                 let previewToken = 0;
@@ -1146,17 +1544,28 @@
                 });
                 sliderTrack.addEventListener('pointerleave', () => { if (!dragging) hidePreview(); });
 
-                // ---------- HALAMAN AWAL DARI LINK (#page/N) ----------
+                // ---------- HALAMAN AWAL: link (#page/N) > lanjut membaca > halaman 1 ----------
                 const parseHash = () => {
                     const m = /^#page\/(\d+)/.exec(location.hash);
                     return m ? parseInt(m[1], 10) : null;
                 };
                 const hashPage = parseHash();
-                const startIdx = spreadStart(clamp((hashPage || 1) - 1, 0, totalPages - 1));
+                let savedPage = 0;
+                try { savedPage = parseInt(localStorage.getItem('bukang_last_page') || '0', 10) || 0; } catch (e) {}
+
+                let startIdx = 0;
+                let resumedFrom = null;
+                if (hashPage) {
+                    startIdx = spreadStart(clamp(hashPage - 1, 0, totalPages - 1));
+                } else if (savedPage >= 2 && savedPage < totalPages - 1) {
+                    startIdx = spreadStart(clamp(savedPage - 1, 0, totalPages - 1));
+                    resumedFrom = savedPage;
+                }
 
                 await updateVisiblePages(startIdx);
+                setLoad(100, 'Siap!');
 
-                // Transisi loading -> buku
+                // Transisi loading -> buku (dipersingkat)
                 setTimeout(() => {
                     welcomeScreen.style.opacity = 0;
                     setTimeout(() => {
@@ -1170,9 +1579,16 @@
                         brandLogo.style.display = 'block';
 
                         bookRevealed = true;
-                        maybeShowInstallSheet(); // ajak pasang aplikasi (jika memungkinkan)
-                    }, 1000);
-                }, 1200);
+                        setTimeout(registerServiceWorker, 2000);
+
+                        if (resumedFrom) {
+                            showToast(`Lanjut dari halaman ${resumedFrom}`, 'Mulai dari awal', () => goToIndex(0), 7000);
+                        } else {
+                            setTimeout(maybeShowOnboarding, 600);
+                            maybeShowInstallSheet();
+                        }
+                    }, 500);
+                }, 250);
 
                 // ---------- EVENT ----------
                 viewBtn.addEventListener('click', () => {
@@ -1204,17 +1620,9 @@
             } catch (error) {
                 welcomeScreen.innerHTML = '<div style="color: #e74c3c; font-weight: bold; text-align:center; padding: 20px;">PDF gagal dimuat. Pastikan file tersedia.</div>';
                 console.error(error);
+                registerServiceWorker();
             }
         });
-
-        // ---------- REGISTRASI PWA ----------
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA aktif!', reg.scope))
-                    .catch(err => console.log('PWA gagal: ', err));
-            });
-        }
     </script>
 </body>
 </html>
