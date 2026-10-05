@@ -12,61 +12,63 @@
     <style>
         /* --- TEMA DASAR (BIRU MUDA & KUNING) --- */
         body {
-            /* Gradien lembut dari biru langit ke kuning ceria */
             background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             min-height: 100vh; margin: 0; padding: 50px 0; 
             font-family: 'Nunito', sans-serif;
-            overflow-y: auto; /* Bisa discroll */
+            overflow-y: auto; 
             overflow-x: hidden;
             color: #2c3e50;
         }
         
-        /* --- TAMPILAN AWAL (WELCOME SCREEN) --- */
+        /* --- TAMPILAN AWAL (WELCOME SCREEN TANPA TEKS) --- */
         #welcome-screen {
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            padding: 20px; max-width: 700px; margin-top: 2vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 70vh; /* Agar berada di tengah layar */
             animation: fadeIn 1.5s ease-in-out;
         }
 
-        /* Logo RK dengan efek mengambang (floating) */
+        /* Logo RK Super Bersih sebagai Loading Utama */
         #rk-logo {
-            width: 140px; 
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
+            width: 180px; /* Dibuat sedikit lebih besar karena sendirian */
+            margin-bottom: 40px;
+            animation: float 2.5s ease-in-out infinite, glow 2.5s ease-in-out infinite;
         }
 
         @keyframes float {
             0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-15px); }
             100% { transform: translateY(0px); }
         }
-        
-        .main-title { 
-            font-size: 40px; color: #1976d2; letter-spacing: 2px; margin-bottom: 5px; 
-            font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 0px rgba(255,255,255,0.7);
+
+        /* Animasi cahaya lembut di belakang logo saat loading */
+        @keyframes glow {
+            0% { filter: drop-shadow(0 0 10px rgba(25, 118, 210, 0.2)); }
+            50% { filter: drop-shadow(0 0 25px rgba(241, 196, 15, 0.6)); }
+            100% { filter: drop-shadow(0 0 10px rgba(25, 118, 210, 0.2)); }
         }
-        
-        .quote {
-            font-size: 20px; font-style: italic; color: #f39c12; margin-bottom: 15px; font-weight: 800;
-        }
-        
-        .sub-quote { font-size: 16px; color: #546e7a; line-height: 1.6; margin-bottom: 30px; font-weight: 600; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Tombol Play Super Minimalis (Bulat Tanpa Teks) */
         #start-btn {
-            padding: 15px 35px; font-size: 18px; font-weight: 800; cursor: pointer;
+            width: 70px; height: 70px; cursor: pointer;
             background: linear-gradient(135deg, #42a5f5, #1e88e5); color: white; 
-            border: none; border-radius: 50px; display: none; font-family: 'Nunito', sans-serif;
+            border: none; border-radius: 50%; display: none; 
+            align-items: center; justify-content: center;
+            font-size: 26px; padding-left: 6px; /* Padding kiri dikit agar ikon play seimbang */
             transition: 0.3s; box-shadow: 0 5px 20px rgba(30, 136, 229, 0.4);
             animation: pulse 2s infinite;
         }
-        #start-btn:hover { transform: translateY(-3px) scale(1.05); background: linear-gradient(135deg, #fbc531, #f39c12); box-shadow: 0 8px 25px rgba(243, 156, 18, 0.5); }
+        #start-btn:hover { 
+            transform: translateY(-5px) scale(1.1); 
+            background: linear-gradient(135deg, #fbc531, #f39c12); 
+            box-shadow: 0 8px 30px rgba(243, 156, 18, 0.5); 
+        }
         
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.6); }
-            70% { box-shadow: 0 0 0 15px rgba(30, 136, 229, 0); }
+            70% { box-shadow: 0 0 0 20px rgba(30, 136, 229, 0); }
             100% { box-shadow: 0 0 0 0 rgba(30, 136, 229, 0); }
         }
 
@@ -94,27 +96,18 @@
         /* --- UI/UX KONTROL BAWAH (MINIMALIS GLASSMORPHISM) --- */
         .controls { 
             display: none; 
-            margin-top: 35px; 
-            margin-bottom: 40px;
-            flex-direction: column; 
-            gap: 15px; 
-            align-items: center;
-            width: 90vw;
-            max-width: 600px;
+            margin-top: 35px; margin-bottom: 40px;
+            flex-direction: column; gap: 15px; align-items: center;
+            width: 90vw; max-width: 600px;
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 2px solid rgba(255, 255, 255, 0.9);
-            padding: 20px 25px;
-            border-radius: 35px;
+            padding: 20px 25px; border-radius: 35px;
             box-shadow: 0 10px 30px rgba(41, 128, 185, 0.1);
         }
 
-        /* --- ROW 1: PREV - SLIDER - NEXT --- */
-        .navigation-row {
-            display: flex; align-items: center; width: 100%; gap: 15px;
-        }
+        .navigation-row { display: flex; align-items: center; width: 100%; gap: 15px; }
 
-        /* Tombol Next & Prev Minimalis */
         .nav-btn {
             width: 40px; height: 40px; border: none; border-radius: 50%;
             background: #e3f2fd; color: #1976d2; cursor: pointer;
@@ -124,9 +117,7 @@
         }
         .nav-btn:hover { background: #1976d2; color: #fff; transform: scale(1.1); }
 
-        .slider-wrapper {
-            flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-        }
+        .slider-wrapper { flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
         
         #page-slider {
             width: 100%; -webkit-appearance: none; appearance: none;
@@ -134,7 +125,6 @@
             border-radius: 10px; outline: none; cursor: pointer;
         }
 
-        /* Thumb slider warna Kuning */
         #page-slider::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
             width: 20px; height: 20px; border-radius: 50%;
@@ -144,10 +134,7 @@
         }
         #page-slider::-webkit-slider-thumb:hover { transform: scale(1.3); background: #f39c12; }
 
-        /* --- ROW 2: INDIKATOR HALAMAN & FITUR --- */
-        .tools-row {
-            display: flex; gap: 15px; justify-content: center; align-items: center; width: 100%;
-        }
+        .tools-row { display: flex; gap: 15px; justify-content: center; align-items: center; width: 100%; }
 
         #page-indicator {
             color: #1976d2; font-size: 15px; font-weight: 800;
@@ -163,28 +150,23 @@
         }
         .tools-row button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.12); }
 
-        #layout-toggle { color: #f39c12; } /* Icon Kuning untuk Buku */
-        #music-btn.playing { color: #1976d2; } /* Biru jika Play */
+        #layout-toggle { color: #f39c12; } 
+        #music-btn.playing { color: #1976d2; } 
         #music-btn.paused { color: #95a5a6; }
         
         .divider { width: 2px; height: 25px; background: rgba(0, 0, 0, 0.08); border-radius: 5px; margin: 0 5px; }
-
-        #loading-text { font-size: 16px; font-weight: 800; color: #1976d2; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
     <div id="welcome-screen">
-        <!-- Logo RK (Gantikan animasi spinner) -->
+        <!-- Logo RK sebagai Loader & Wajah Utama Web -->
         <img src="logo_rk.png" alt="Logo Rumah Kepemimpinan" id="rk-logo" onerror="this.style.display='none'">
         
-        <h1 class="main-title">Ksatiara 12</h1>
-        <div class="quote">"22 Purnama Cerita dari Rumah Kita..."</div>
-        <div class="sub-quote">Dua puluh dua bulan. Waktu yang cukup panjang untuk mengukir memori.<br>Selamat datang di mesin waktu kita.</div>
-        
-        <div id="loading-text">Menyiapkan Mesin Waktu... ⏳</div>
-        
-        <button id="start-btn"><i class="fa-solid fa-book-open" style="margin-right: 8px;"></i> Buka Lembaran & Putar Lagu</button>
+        <!-- Tombol Play Bulat (Tampil otomatis saat loading selesai) -->
+        <button id="start-btn" title="Buka Lembaran & Putar Lagu">
+            <i class="fa-solid fa-play"></i>
+        </button>
     </div>
 
     <div id="book-wrapper">
@@ -192,18 +174,14 @@
     </div>
 
     <div class="controls" id="controls">
-        <!-- Baris 1: Navigasi Minimalis (Prev, Slider, Next) -->
         <div class="navigation-row">
             <button class="nav-btn" id="prev-btn" title="Halaman Sebelumnya"><i class="fa-solid fa-chevron-left"></i></button>
-            
             <div class="slider-wrapper">
                 <input type="range" id="page-slider" min="1" max="1" value="1" title="Geser untuk pindah halaman">
             </div>
-            
             <button class="nav-btn" id="next-btn" title="Halaman Selanjutnya"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
 
-        <!-- Baris 2: Indikator & Fitur -->
         <div class="tools-row">
             <div id="page-indicator">Hal 1 / ?</div>
             <div class="divider"></div>
@@ -212,9 +190,8 @@
         </div>
     </div>
 
-    <!-- AUDIO PLAYER -->
+    <!-- AUDIO FILES -->
     <audio id="bg-music" src="music.mp3.mp3" loop preload="auto"></audio>
-    <!-- AUDIO EFEK KERTAS -->
     <audio id="flip-sound" src="flip.mp3" preload="auto"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -226,8 +203,8 @@
             const pdfUrl = 'bukang_compressed.pdf'; 
 
             const welcomeScreen = document.getElementById('welcome-screen');
-            const loadingText = document.getElementById('loading-text');
             const startBtn = document.getElementById('start-btn');
+            const rkLogo = document.getElementById('rk-logo');
             const flipbookEl = document.getElementById('flipbook');
             const bookWrapper = document.getElementById('book-wrapper');
             const controls = document.getElementById('controls');
@@ -247,7 +224,6 @@
             let pageFlip; 
             let totalPages = 0;
 
-            // Fungsi memutar suara kertas
             const playFlipSound = () => {
                 flipSound.currentTime = 0;
                 flipSound.play().catch(e => console.log("Gagal putar efek kertas"));
@@ -274,8 +250,10 @@
                     flipbookEl.appendChild(pageDiv);
                 }
 
-                loadingText.style.display = 'none';
-                startBtn.style.display = 'inline-block';
+                // Hapus animasi glow pada logo saat loading selesai agar lebih kalem
+                rkLogo.style.animation = "float 3s ease-in-out infinite"; 
+                // Tampilkan tombol Play bulat
+                startBtn.style.display = 'flex';
 
                 pageFlip = new St.PageFlip(flipbookEl, {
                     width: 450, height: 636, size: "stretch",
@@ -285,6 +263,9 @@
 
                 startBtn.addEventListener('click', () => {
                     welcomeScreen.style.display = 'none';
+                    // Reset margin body untuk buka buku
+                    document.body.style.justifyContent = 'flex-start';
+                    
                     bookWrapper.style.display = 'block';
                     controls.style.display = 'flex';
 
@@ -296,15 +277,9 @@
                     bgMusic.play().catch(console.error);
                 });
 
-                // KETIKA TOMBOL NEXT/PREV DIKLIK
-                document.getElementById('prev-btn').addEventListener('click', () => {
-                    pageFlip.flipPrev();
-                });
-                document.getElementById('next-btn').addEventListener('click', () => {
-                    pageFlip.flipNext();
-                });
+                document.getElementById('prev-btn').addEventListener('click', () => pageFlip.flipPrev());
+                document.getElementById('next-btn').addEventListener('click', () => pageFlip.flipNext());
 
-                // KETIKA SLIDER DIGESER
                 pageSlider.addEventListener('input', (e) => {
                     const pageNum = parseInt(e.target.value, 10);
                     pageFlip.turnToPage(pageNum - 1);
@@ -312,7 +287,6 @@
                     playFlipSound();
                 });
 
-                // KETIKA HALAMAN DIBALIK (Semua interaksi flip akan memicu ini)
                 flipbookEl.addEventListener('flip', (e) => {
                     const currentPage = (e.detail !== undefined ? e.detail : e.data) + 1;
                     pageSlider.value = currentPage;
@@ -348,7 +322,8 @@
                 });
 
             } catch (error) {
-                loadingText.innerHTML = '<span style="color: #e74c3c;">❌ Gagal memuat buku PDF.</span>';
+                // Tampilkan pesan error minimalis jika PDF gagal di-load
+                welcomeScreen.innerHTML += '<div style="color: #e74c3c; font-weight: bold; margin-top: 20px;">PDF Gagal Dimuat</div>';
                 console.error(error);
             }
         });
