@@ -7,6 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#e3f2fd">
+    
+    <!-- Panggilan PWA Manifest & Ikon -->
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="logo_ksatiara.png">
     
     <title>Buku Angkatan Ksatiara 12</title>
@@ -22,7 +25,6 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; margin: 0; padding: 50px 0; 
             font-family: 'Nunito', sans-serif;
-            /* Diubah menjadi auto agar bisa digeser saat buku di-zoom */
             overflow: auto; 
             color: #2c3e50;
             overscroll-behavior: contain;
@@ -69,7 +71,7 @@
         .stf__item.--right .page { box-shadow: inset 15px 0 30px rgba(0,0,0,0.04) !important; }
         .stf__item.--flipping .page { box-shadow: inset 0 0 20px rgba(0,0,0,0.1) !important; }
 
-        /* --- UI MINIMALIS: PANAH KIRI & KANAN (Position Fixed agar tetap melayang) --- */
+        /* --- UI MINIMALIS: PANAH KIRI & KANAN --- */
         .side-nav {
             position: fixed; top: 50%; transform: translateY(-50%);
             width: 45px; height: 45px; border-radius: 50%;
@@ -116,7 +118,7 @@
         }
         #page-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
 
-        /* --- MINI FLOATING MENU (Pojok atas dengan tambahan tombol Zoom) --- */
+        /* --- MINI FLOATING MENU (Pojok atas dengan Zoom) --- */
         #top-tools {
             position: fixed; top: 15px; right: 15px;
             display: none; gap: 10px; z-index: 100;
@@ -133,7 +135,7 @@
 </head>
 <body>
 
-    <!-- SCREEN LOADING -->
+    <!-- SCREEN LOADING (Hanya Logo, Tidak Ada Teks) -->
     <div id="welcome-screen">
         <img src="logo_ksatiara.png" alt="Logo" id="loading-logo" onerror="this.src='logo_rk.png'">
     </div>
@@ -143,7 +145,7 @@
         <div id="flipbook"></div>
     </div>
 
-    <!-- TOMBOL NAVIGASI SAMPING -->
+    <!-- TOMBOL NAVIGASI KIRI KANAN -->
     <button class="side-nav" id="nav-left"><i class="fa-solid fa-chevron-left"></i></button>
     <button class="side-nav" id="nav-right"><i class="fa-solid fa-chevron-right"></i></button>
 
@@ -153,12 +155,10 @@
         <input type="range" id="page-slider" min="1" max="1" value="1">
     </div>
 
-    <!-- TOMBOL KECIL POJOK KANAN ATAS (Sekarang dilengkapi fitur Zoom) -->
+    <!-- TOMBOL KECIL POJOK KANAN ATAS -->
     <div id="top-tools">
-        <!-- Tombol Zoom -->
         <button class="mini-btn" id="zoom-out-btn" title="Perkecil"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
         <button class="mini-btn" id="zoom-in-btn" title="Perbesar"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
-        <!-- Tombol Layar Penuh & Musik -->
         <button class="mini-btn" id="fullscreen-btn"><i class="fa-solid fa-expand"></i></button>
         <button class="mini-btn playing" id="music-btn"><i class="fa-solid fa-pause"></i></button>
     </div>
@@ -199,6 +199,7 @@
             let tooltipTimeout;
             let currentZoom = 1;
 
+            // FUNGSI SUARA KERTAS DINAMIS
             const playFlipSound = () => {
                 const sound = new Audio('flip.mp3');
                 sound.volume = 1.0;
@@ -208,17 +209,14 @@
             const updateTooltip = (val) => {
                 pageTooltip.innerText = val;
                 pageTooltip.style.opacity = 1;
-                
                 clearTimeout(tooltipTimeout);
                 tooltipTimeout = setTimeout(() => { pageTooltip.style.opacity = 0; }, 1500);
             };
 
-            // FUNGSI ZOOM
+            // FUNGSI ZOOM DINAMIS
             const applyZoom = () => {
                 bookWrapper.style.transform = `scale(${currentZoom})`;
                 bookWrapper.style.transformOrigin = 'top center'; 
-                
-                // Menyesuaikan margin agar halaman bisa discroll ke bawah saat diperbesar
                 if (currentZoom > 1) {
                     const extraHeight = bookWrapper.offsetHeight * (currentZoom - 1);
                     bookWrapper.style.marginBottom = `${extraHeight + 50}px`;
@@ -228,6 +226,7 @@
             };
 
             try {
+                // LOAD PDF
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
                 totalPages = pdf.numPages;
 
@@ -245,15 +244,16 @@
                     flipbookEl.appendChild(pageDiv);
                 }
 
+                // INIT BUKU (Force 2 halaman terus dengan usePortrait: false)
                 pageFlip = new St.PageFlip(flipbookEl, {
                     width: 450, height: 636, size: "stretch",
                     minWidth: 315, maxWidth: 1000, minHeight: 420, maxHeight: 1350,
                     showCover: true, mobileScrollSupport: false, usePortrait: false 
                 });
 
+                // PROSES TRANISI LOADING -> TAMPIL BUKU
                 setTimeout(() => {
                     welcomeScreen.style.opacity = 0;
-                    
                     setTimeout(() => {
                         welcomeScreen.style.display = 'none';
                         bookWrapper.style.display = 'block';
@@ -269,6 +269,7 @@
                     }, 1000); 
                 }, 1500); 
 
+                // AUTOPLAY MUSIK SAAT USER MENYENTUH LAYAR PERTAMA KALI
                 const startAudio = () => {
                     if (bgMusic.paused) { bgMusic.play().catch(()=>{}); }
                 };
@@ -283,7 +284,7 @@
                     if (currentZoom > 1) { currentZoom -= 0.5; applyZoom(); } 
                 });
 
-                // NAVIGASI
+                // EVENT NAVIGASI
                 navLeft.addEventListener('click', () => pageFlip.flipPrev());
                 navRight.addEventListener('click', () => pageFlip.flipNext());
 
@@ -294,6 +295,7 @@
                     playFlipSound(); 
                 });
 
+                // EVENT FLIP (DARI LIBRARY) - PASTIKAN SUARA KERTAS BERBUNYI
                 pageFlip.on('flip', (e) => {
                     const currentPage = e.data + 1;
                     pageSlider.value = currentPage;
@@ -301,6 +303,7 @@
                     playFlipSound();
                 });
 
+                // MENU LAINNYA (FULLSCREEN & MUSIK)
                 fullscreenBtn.addEventListener('click', () => {
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen().catch(()=>{});
@@ -328,6 +331,18 @@
                 console.error(error);
             }
         });
+
+        // REGISTRASI PWA (SERVICE WORKER)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('PWA aktif!', registration.scope);
+                }).catch(err => {
+                    console.log('PWA gagal: ', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
