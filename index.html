@@ -159,7 +159,6 @@
 
     <!-- AUDIO FILES -->
     <audio id="bg-music" src="music.mp3.mp3" loop preload="auto"></audio>
-    <audio id="flip-sound" src="flip.mp3" preload="auto"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
@@ -183,17 +182,18 @@
             const fullscreenBtn = document.getElementById('fullscreen-btn');
             
             const bgMusic = document.getElementById('bg-music');
-            const flipSound = document.getElementById('flip-sound'); 
             
             bgMusic.volume = 0.5;
-            flipSound.volume = 1.0; 
             
             let pageFlip; 
             let totalPages = 0;
             let tooltipTimeout;
 
+            // SISTEM AUDIO KERTAS TERBARU
+            // Fungsi ini akan membuat suara kertas seketika memutar file flip.mp3
             const playFlipSound = () => {
                 const sound = new Audio('flip.mp3');
+                sound.volume = 1.0;
                 sound.play().catch(()=>{});
             };
 
@@ -229,52 +229,52 @@
                     showCover: true, mobileScrollSupport: false, usePortrait: false 
                 });
 
-                // PERBAIKAN: Memulai animasi transisi Loading ke Buku
                 setTimeout(() => {
                     welcomeScreen.style.opacity = 0;
                     
-                    // Setelah animasi fading selesai (1 detik)
                     setTimeout(() => {
                         welcomeScreen.style.display = 'none';
-                        
-                        // 1. Tampilkan Wadah Bukunya DULU
                         bookWrapper.style.display = 'block';
                         
-                        // 2. BARU render halaman ke dalamnya (agar ukurannya tidak nol)
                         pageFlip.loadFromHTML(document.querySelectorAll('.page'));
                         pageSlider.max = totalPages;
                         
-                        // 3. Tampilkan UI Minimalis
                         navLeft.style.display = 'flex';
                         navRight.style.display = 'flex';
                         bottomBar.style.display = 'flex';
                         topTools.style.display = 'flex';
                         
                     }, 1000); 
-                }, 1500); // Tunggu PDF selesai dirender, plus ekstra 1.5 detik agar loading logo terlihat elegan
+                }, 1500); 
 
-                // LOGIKA MUSIK: Akan menyala seketika saat user menyentuh buku/layar untuk pertama kalinya
                 const startAudio = () => {
                     if (bgMusic.paused) { bgMusic.play().catch(()=>{}); }
                 };
                 document.body.addEventListener('click', startAudio, { once: true });
                 document.body.addEventListener('touchstart', startAudio, { once: true });
 
-                // EVENT LISTENER NAVIGASI
+                // NAVIGASI TOMBOL KIRI KANAN
                 navLeft.addEventListener('click', () => pageFlip.flipPrev());
                 navRight.addEventListener('click', () => pageFlip.flipNext());
 
+                // NAVIGASI SLIDER BAWAH
                 pageSlider.addEventListener('input', (e) => {
                     const pageNum = parseInt(e.target.value, 10);
-                    pageFlip.turnToPage(pageNum - 1);
+                    pageFlip.turnToPage(pageNum - 1); // StPageFlip menggunakan index dari 0
                     updateTooltip(pageNum);
-                    playFlipSound();
+                    // Panggilan suara kertas jika digeser lewat slider
+                    playFlipSound(); 
                 });
 
-                flipbookEl.addEventListener('flip', (e) => {
-                    const currentPage = (e.detail !== undefined ? e.detail : e.data) + 1;
+                // --- INI KUNCINYA ---
+                // Event bawaan StPageFlip: Membaca secara akurat kapanpun buku dibalik
+                // baik lewat kursor ditarik, tombol next, atau sapuan jari di HP
+                pageFlip.on('flip', (e) => {
+                    const currentPage = e.data + 1;
                     pageSlider.value = currentPage;
                     updateTooltip(currentPage);
+                    
+                    // Panggilan suara kertas langsung dieksekusi di sini
                     playFlipSound();
                 });
 
