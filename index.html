@@ -28,7 +28,7 @@
         /* --- TEMA DASAR --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root { --pad-top: 10px; --pad-bottom: 78px; }
-        html { height: 100%; touch-action: pan-x pan-y; }
+        html { height: 100%; touch-action: none; }
         body {
             background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -37,10 +37,9 @@
             font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
             overflow: hidden;
             color: #2c3e50;
-            overscroll-behavior: contain;
-            touch-action: pan-x pan-y; /* pinch ditangani oleh JavaScript, bukan browser */
+            overscroll-behavior: none;
+            touch-action: none; /* semua gerakan jari (geser & cubit) ditangani JavaScript, bukan scroll bawaan */
         }
-        body.zoomed { overflow: auto; height: auto; min-height: 100vh; min-height: 100dvh; }
 
         /* Pengukur area aman (poni/notch) untuk mode aplikasi */
         #safe-probe {
@@ -78,6 +77,7 @@
 
         /* --- STAGE: ZOOM > GESER (cover ke tengah) > BUKU --- */
         #zoom-stage { display: none; position: relative; flex: none; margin: auto; }
+        body.zoomed #zoom-stage { cursor: grab; }
         #zoomer { transform-origin: top left; width: max-content; }
         #book-shift {
             position: relative;
@@ -291,6 +291,7 @@
             position: relative; width: min(92vw, 380px); background: #fff; border-radius: 16px;
             padding: 22px 20px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
             max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto;
+            touch-action: pan-y;
         }
         .modal-card h3 { margin: 0 0 16px; font-size: 18px; padding-right: 24px; }
         .modal-close {
@@ -677,98 +678,184 @@
                 updateSoundBtn();
             });
 
-            // ---------- ZOOM ----------
+            // ---------- ZOOM & GESER ----------
+            // Murni lewat transform (tanpa scroll bawaan & tanpa mengubah layout), supaya tidak bergetar.
+            let tx = 0, ty = 0;                         // pergeseran (px)
+            const base = { left: 0, top: 0, w: 0, h: 0 }; // posisi & ukuran stage di layar (tanpa zoom)
             let zoomUiState = null;
-            const applyZoom = () => {
-                const zoomed = currentZoom > 1.01;
-                document.body.classList.toggle('zoomed', zoomed);
-                if (flipbookEl) flipbookEl.style.pointerEvents = zoomed ? 'none' : '';
-                if (zoomed) {
-                    zoomer.style.transform = `scale(${currentZoom})`;
-                    zoomStage.style.width = `${shift.offsetWidth * currentZoom}px`;
-                    zoomStage.style.height = `${shift.offsetHeight * currentZoom}px`;
-                } else {
-                    zoomer.style.transform = '';
-                    zoomStage.style.width = '';
-                    zoomStage.style.height = '';
-                }
-                if (zoomUiState !== zoomed) {
+            let writeRaf = 0;
+            let willChangeTimer = null;
+
+            const refreshBase = () => {
+                const r = zoomStage.getBoundingClientRect();
+                base.left = r.left; base.top = r.top; base.w = r.width; base.h = r.height;
+            };
+
+            // Jaga agar halaman tidak keluar terlalu jauh dari layar
+            const clampPan = () => {
+                const vw = window.innerWidth, vh = window.innerHeight;
+                const W = base.w * currentZoom, H = base.h * currentZoom;
+                const a = -base.left, b = vw - W - base.left;
+                tx = clamp(tx, Math.min(a, b), Math.max(a, b));
+                const c = -base.top, d = vh - H - base.top;
+                ty = clamp(ty, Math.min(c, d), Math.max(c, d));
+            };
+
+            const writeTransform = () => {
+                writeRaf = 0;
+                zoomer.style.transform = currentZoom > 1
+                    ? `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(${currentZoom.toFixed(4)})`
+                    : '';
+            };
+            // Satu kali tulis per frame, lapisan GPU aktif hanya selama gerakan
+            const scheduleWrite = () => {
+                zoomer.style.willChange = 'transform';
+                clearTimeout(willChangeTimer);
+                willChangeTimer = setTimeout(() => { zoomer.style.willChange = ''; }, 400);
+                if (!writeRaf) writeRaf = requestAnimationFrame(writeTransform);
+            };
+
+            const setView = (z, ntx, nty) => {
+                currentZoom = clamp(z, 1, MAX_ZOOM);
+                if (currentZoom <= 1.01) { currentZoom = 1; ntx = 0; nty = 0; }
+                tx = ntx; ty = nty;
+                if (currentZoom > 1) clampPan();
+                const zoomed = currentZoom > 1;
+                if (zoomed !== zoomUiState) {
                     zoomUiState = zoomed;
+                    document.body.classList.toggle('zoomed', zoomed);
+                    if (flipbookEl) flipbookEl.style.pointerEvents = zoomed ? 'none' : '';
                     zoomBtn.innerHTML = zoomed
                         ? '<i class="fa-solid fa-magnifying-glass-minus"></i>'
                         : '<i class="fa-solid fa-magnifying-glass-plus"></i>';
                     zoomBtn.title = zoomed ? 'Kembali normal' : 'Perbesar';
                 }
-                onZoomSettled(); // render ulang lebih tajam setelah zoom berhenti
+                scheduleWrite();
             };
 
-            // Zoom dengan menjaga titik (ax, ay) di konten tetap berada di posisi layar (sx, sy)
-            const zoomAround = (newZoom, ax, ay, sx, sy) => {
-                currentZoom = clamp(newZoom, 1, MAX_ZOOM);
-                applyZoom();
-                const r = zoomStage.getBoundingClientRect();
-                window.scrollBy(r.left + ax * currentZoom - sx, r.top + ay * currentZoom - sy);
+            // Dipanggil ulang setelah buku dibangun ulang / layar berubah ukuran
+            const applyZoom = () => {
+                refreshBase();
+                setView(currentZoom, tx, ty);
+                if (flipbookEl) flipbookEl.style.pointerEvents = currentZoom > 1 ? 'none' : '';
             };
-            const zoomTo = (newZoom, sx, sy) => {
-                const r = zoomStage.getBoundingClientRect();
-                zoomAround(newZoom, (sx - r.left) / currentZoom, (sy - r.top) / currentZoom, sx, sy);
+
+            // Zoom dengan menjaga titik di bawah (sx, sy) tetap di tempatnya
+            const zoomAtPoint = (newZ, sx, sy) => {
+                refreshBase();
+                const z0 = currentZoom;
+                const ax = (sx - base.left - tx) / z0;
+                const ay = (sy - base.top - ty) / z0;
+                const z = clamp(newZ, 1, MAX_ZOOM);
+                setView(z, sx - base.left - ax * z, sy - base.top - ay * z);
             };
 
             // Tombol zoom: normal <-> 2x
             zoomBtn.addEventListener('click', () => {
-                zoomTo(currentZoom > 1.01 ? 1 : 2, window.innerWidth / 2, window.innerHeight / 2);
+                zoomAtPoint(currentZoom > 1 ? 1 : 2, window.innerWidth / 2, window.innerHeight / 2);
+                onZoomSettled();
             });
 
-            // ---------- PINCH (DUA JARI) DI HP ----------
-            let pinch = null;
-            let pinchBlock = false;
+            // ---------- GESTUR: PINCH (DUA JARI) & GESER (SATU JARI) ----------
+            const isUiTarget = (el) => !!(el && el.closest && el.closest(
+                '#top-tools, #bottom-bar, .modal, #install-sheet, #toast, #ui-restore, .nav-arrow'));
             const touchDist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
             const touchMid = (t) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 });
+
+            let pinch = null;
+            let pinchBlock = false;
+            let pan = null;
+            const startPan = (t) => {
+                refreshBase();
+                pan = { x0: t.clientX, y0: t.clientY, tx0: tx, ty0: ty };
+            };
+            const movePan = (t) => {
+                setView(currentZoom, pan.tx0 + (t.clientX - pan.x0), pan.ty0 + (t.clientY - pan.y0));
+            };
 
             window.addEventListener('touchstart', (e) => {
                 if (!pageFlip || anyModalOpen()) return;
                 if (e.touches.length >= 2) {
+                    if (isUiTarget(e.touches[0].target) || isUiTarget(e.touches[1].target)) return;
                     pinchBlock = true;
+                    pan = null;
                     e.stopPropagation(); // jangan sampai terbaca sebagai geseran balik halaman
+                    refreshBase();
                     const m = touchMid(e.touches);
-                    const r = zoomStage.getBoundingClientRect();
                     pinch = {
                         d0: Math.max(touchDist(e.touches), 1),
                         z0: currentZoom,
-                        ax: (m.x - r.left) / currentZoom,
-                        ay: (m.y - r.top) / currentZoom
+                        ax: (m.x - base.left - tx) / currentZoom,
+                        ay: (m.y - base.top - ty) / currentZoom
                     };
+                } else if (e.touches.length === 1 && currentZoom > 1 && !isUiTarget(e.target)) {
+                    startPan(e.touches[0]);
                 }
             }, { capture: true, passive: false });
 
             window.addEventListener('touchmove', (e) => {
-                if (!pinchBlock) return;
-                e.stopPropagation();
-                if (pinch && e.touches.length >= 2) {
+                if (pinchBlock) {
+                    e.stopPropagation();
                     if (e.cancelable) e.preventDefault();
-                    const m = touchMid(e.touches);
-                    zoomAround(pinch.z0 * touchDist(e.touches) / pinch.d0, pinch.ax, pinch.ay, m.x, m.y);
+                    if (pinch && e.touches.length >= 2) {
+                        const m = touchMid(e.touches);
+                        const z = clamp(pinch.z0 * touchDist(e.touches) / pinch.d0, 1, MAX_ZOOM);
+                        setView(z, m.x - base.left - pinch.ax * z, m.y - base.top - pinch.ay * z);
+                    } else if (pan && e.touches.length === 1) {
+                        movePan(e.touches[0]);
+                    }
+                    return;
+                }
+                if (pan && e.touches.length === 1) {
+                    if (e.cancelable) e.preventDefault();
+                    movePan(e.touches[0]);
                 }
             }, { capture: true, passive: false });
 
             const endTouch = (e) => {
-                if (!pinchBlock) return;
-                e.stopPropagation();
-                if (e.touches.length < 2) pinch = null;
-                if (e.touches.length === 0) {
-                    pinchBlock = false;
-                    if (currentZoom < 1.08 && currentZoom !== 1) { currentZoom = 1; applyZoom(); }
+                if (pinchBlock) {
+                    e.stopPropagation();
+                    if (e.touches.length < 2) pinch = null;
+                    if (e.touches.length === 1 && currentZoom > 1 && !pan) startPan(e.touches[0]);
+                    if (e.touches.length === 0) {
+                        pinchBlock = false;
+                        pan = null;
+                        if (currentZoom < 1.08) setView(1, 0, 0);
+                        onZoomSettled(); // render ulang lebih tajam setelah zoom berhenti
+                    }
+                    return;
                 }
+                if (e.touches.length === 0) pan = null;
             };
             window.addEventListener('touchend', endTouch, { capture: true });
             window.addEventListener('touchcancel', endTouch, { capture: true });
 
-            // Trackpad pinch / Ctrl + scroll di laptop
-            window.addEventListener('wheel', (e) => {
-                if (!e.ctrlKey || !pageFlip) return;
+            // Laptop: seret dengan mouse saat di-zoom
+            let mousePan = null;
+            window.addEventListener('mousedown', (e) => {
+                if (currentZoom <= 1 || e.button !== 0 || isUiTarget(e.target) || anyModalOpen()) return;
+                refreshBase();
+                mousePan = { x0: e.clientX, y0: e.clientY, tx0: tx, ty0: ty };
                 e.preventDefault();
-                zoomTo(currentZoom * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
-                if (currentZoom < 1.03 && currentZoom !== 1) { currentZoom = 1; applyZoom(); }
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (!mousePan) return;
+                setView(currentZoom, mousePan.tx0 + (e.clientX - mousePan.x0), mousePan.ty0 + (e.clientY - mousePan.y0));
+            });
+            window.addEventListener('mouseup', () => { mousePan = null; });
+
+            // Laptop: pinch trackpad / Ctrl + scroll untuk zoom, scroll biasa untuk menggeser
+            window.addEventListener('wheel', (e) => {
+                if (!pageFlip || anyModalOpen()) return;
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    zoomAtPoint(currentZoom * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
+                    onZoomSettled();
+                } else if (currentZoom > 1 && !isUiTarget(e.target)) {
+                    e.preventDefault();
+                    refreshBase();
+                    setView(currentZoom, tx - e.deltaX, ty - e.deltaY);
+                }
             }, { passive: false });
 
             // ---------- MUSIK ----------
