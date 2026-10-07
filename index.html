@@ -553,6 +553,8 @@
             const IS_TOUCH = window.matchMedia('(pointer: coarse)').matches;
             const TARGET_WIDTH = IS_TOUCH ? 800 : 1000;      // lebar piksel canvas tiap halaman (zoom normal)
             const MAX_HI_WIDTH = IS_TOUCH ? 1800 : 2400;     // lebar maksimal saat di-zoom (lebih tajam)
+            const HD_DIR = 'hd/';                            // folder gambar halaman HD (diisi dari PDF besar, lihat panduan)
+            const HD_PREFIX = 'p-';                          // awalan nama file: hd/p-001.jpg, hd/p-002.jpg, dst.
             const THUMB_W = 160;
             const RENDER_RADIUS = 3;
             const KEEP_RADIUS = 8;
@@ -1256,12 +1258,39 @@
                     return TARGET_WIDTH;
                 };
 
+                // Gambar HD per halaman: hanya diunduh untuk halaman yang sedang di-zoom
+                const hdDone = new Set();     // halaman yang canvas-nya sekarang berisi gambar HD
+                const hdMissing = new Set();  // halaman yang gambar HD-nya tidak ada (pakai PDF saja)
+                const hdName = (idx) => HD_DIR + HD_PREFIX + String(idx + 1).padStart(String(totalPages).length, '0') + '.jpg';
+                const loadHD = (idx) => new Promise((resolve) => {
+                    if (hdMissing.has(idx)) return resolve(null);
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => { hdMissing.add(idx); resolve(null); };
+                    img.src = hdName(idx);
+                });
+
                 const renderPage = async (idx) => {
                     const targetW = desiredWidth(idx);
+                    const wantHD = targetW > TARGET_WIDTH + 8 && !hdMissing.has(idx);
                     const cur = renderedWidth.get(idx);
-                    if (rendering.has(idx) || (cur && Math.abs(cur - targetW) < 8)) return false;
+                    if (rendering.has(idx)) return false;
+                    if (wantHD ? hdDone.has(idx) : (cur && !hdDone.has(idx) && Math.abs(cur - targetW) < 8)) return false;
                     rendering.add(idx);
                     try {
+                        if (wantHD) {
+                            const img = await loadHD(idx);
+                            if (img) {
+                                const canvas = canvases[idx];
+                                canvas.width = img.naturalWidth;
+                                canvas.height = img.naturalHeight;
+                                canvas.getContext('2d').drawImage(img, 0, 0);
+                                renderedWidth.set(idx, img.naturalWidth);
+                                hdDone.add(idx);
+                                return true;
+                            }
+                            // gambar HD tidak ada: lanjut render dari PDF seperti biasa
+                        }
                         const page = await pdf.getPage(idx + 1);
                         const base = page.getViewport({ scale: 1 });
                         const viewport = page.getViewport({ scale: targetW / base.width });
@@ -1274,6 +1303,7 @@
                         canvas.height = off.height;
                         canvas.getContext('2d').drawImage(off, 0, 0);
                         renderedWidth.set(idx, off.width);
+                        hdDone.delete(idx);
                         if (Math.abs(desiredWidth(idx) - off.width) > 8) scheduleUpdate(currentIdx(), 120);
                         return true;
                     } catch (err) {
@@ -1288,6 +1318,7 @@
                     canvases[idx].width = 0;
                     canvases[idx].height = 0;
                     renderedWidth.delete(idx);
+                    hdDone.delete(idx);
                 };
 
                 const updateVisiblePages = async (center) => {
