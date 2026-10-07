@@ -1,6 +1,6 @@
-// Naikkan angka versi ini (v4 -> v5 dst.) setiap kali mengganti PDF/musik/logo/ikon
+// Naikkan angka versi ini (v5 -> v6 dst.) setiap kali mengganti PDF/musik/logo/ikon
 // dengan nama file yang sama, supaya pengunjung mendapat versi terbaru.
-const CACHE_NAME = 'ksatiara-pwa-v4';
+const CACHE_NAME = 'ksatiara-pwa-v5';
 
 // File kecil dulu (cepat), file besar belakangan satu per satu agar tidak berebut kecepatan unduh
 const SMALL_ASSETS = [
@@ -15,7 +15,7 @@ const SMALL_ASSETS = [
   './flip.mp3'
 ];
 const BIG_ASSETS = [
-  './bukang_compressed.pdf',
+  './api/buku', // PDF high resolution (diteruskan dari GitHub Releases lewat api/buku.js)
   './music.mp3'
 ];
 
@@ -72,14 +72,16 @@ self.addEventListener('activate', event => {
 });
 
 // Balasan parsial (206) dari cache. Wajib untuk audio di Safari dan untuk pdf.js
+// Memakai Blob.slice supaya PDF besar tidak dimuat penuh ke memori setiap kali ada permintaan
 async function handleRange(request) {
   const cached = await caches.match(request.url);
   if (!cached) return fetch(request);
 
-  const buf = await cached.arrayBuffer();
-  const total = buf.byteLength;
   const m = /bytes=(\d*)-(\d*)/.exec(request.headers.get('range') || '');
   if (!m) return cached;
+
+  const blob = await cached.blob();
+  const total = blob.size;
 
   let start, end;
   if (m[1] === '' && m[2] !== '') {            // suffix: bytes=-500
@@ -95,7 +97,7 @@ async function handleRange(request) {
     return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${total}` } });
   }
 
-  return new Response(buf.slice(start, end + 1), {
+  return new Response(blob.slice(start, end + 1), {
     status: 206,
     statusText: 'Partial Content',
     headers: {
