@@ -391,7 +391,7 @@
     <div id="top-tools">
         <button class="tool-btn bg-red" id="share-btn" title="Bagikan" aria-label="Bagikan"><i class="fa-solid fa-share-nodes"></i></button>
         <button class="tool-btn sec bg-cyan" id="save-btn" title="Simpan halaman sebagai gambar" aria-label="Simpan halaman sebagai gambar"><i class="fa-solid fa-image"></i></button>
-        <button class="tool-btn sec bg-blue" id="pdf-btn" title="Unduh PDF" aria-label="Unduh PDF"><i class="fa-solid fa-file-pdf"></i></button>
+        <button class="tool-btn sec bg-blue" id="pdf-btn" title="Unduh PDF (HD atau ringan)" aria-label="Unduh PDF (HD atau ringan)"><i class="fa-solid fa-file-pdf"></i></button>
         <button class="tool-btn bg-teal" id="zoom-btn" title="Perbesar" aria-label="Perbesar"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
         <button class="tool-btn sec bg-dark" id="fullscreen-btn" title="Layar penuh" aria-label="Layar penuh"><i class="fa-solid fa-expand"></i></button>
         <button class="tool-btn sec bg-purple" id="view-btn" title="Tampilan 1 halaman" aria-label="Ganti tampilan 1 atau 2 halaman"><i class="fa-solid fa-file"></i></button>
@@ -404,7 +404,7 @@
 
         <div id="more-menu" role="menu">
             <button class="menu-item" id="m-save"><i class="fa-solid fa-image"></i><span>Simpan halaman sebagai gambar</span></button>
-            <button class="menu-item" id="m-pdf"><i class="fa-solid fa-file-pdf"></i><span>Unduh PDF</span></button>
+            <button class="menu-item" id="m-pdf"><i class="fa-solid fa-file-pdf"></i><span>Unduh PDF (HD / ringan)</span></button>
             <button class="menu-item" id="m-fs"><i class="fa-solid fa-expand"></i><span>Layar penuh</span></button>
             <button class="menu-item" id="m-view"><i class="fa-solid fa-file" id="m-view-icon"></i><span id="m-view-label">Tampilan 1 halaman</span></button>
             <button class="menu-item" id="m-immersive"><i class="fa-solid fa-eye-slash"></i><span>Mode baca (sembunyikan menu)</span></button>
@@ -430,7 +430,7 @@
             <div class="is-text">
                 <b>Pasang aplikasi</b>
                 <span id="is-desc">Buka buku ini langsung dari layar utama HP, layar penuh tanpa tampilan browser.</span><br>
-                <a class="is-pdf" href="https://github.com/Arsyakhan/bukang-ksatiara12/releases/download/Bukang/BUKU.ANGKATAN.FIX.NO.DEBAT.pdf" download="Buku-Angkatan-Ksatiara-12.pdf"><i class="fa-solid fa-download"></i> Unduh PDF saja</a>
+                <a class="is-pdf" href="bukang_compressed.pdf" download="Buku-Angkatan-Ksatiara-12.pdf"><i class="fa-solid fa-download"></i> Unduh PDF saja</a>
             </div>
         </div>
         <div class="is-actions">
@@ -544,8 +544,9 @@
 
        document.addEventListener("DOMContentLoaded", async () => {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-            const pdfUrl = '/api/buku'; // dipakai untuk menampilkan buku (diteruskan dari GitHub Releases lewat api/buku.js)
-            const PDF_DOWNLOAD_URL = 'https://github.com/Arsyakhan/bukang-ksatiara12/releases/download/Bukang/BUKU.ANGKATAN.FIX.NO.DEBAT.pdf'; // dipakai tombol unduh
+            const pdfUrl = 'bukang_compressed.pdf'; // PDF ringan (±5 MB) untuk membaca buku, dilayani langsung oleh Vercel
+            const PDF_LIGHT_URL = 'bukang_compressed.pdf'; // versi ringan untuk diunduh
+            const PDF_DOWNLOAD_URL = 'https://github.com/Arsyakhan/bukang-ksatiara12/releases/download/Bukang/BUKU.ANGKATAN.FIX.NO.DEBAT.pdf'; // PDF HD (±1,2 GB) untuk diunduh, dilayani GitHub Releases
             const BOOK_TITLE = 'Buku Angkatan Ksatiara 12';
 
             // --- Pengaturan ---
@@ -917,8 +918,9 @@
 
             // ---------- UNDUH PDF ----------
             pdfBtn.addEventListener('click', () => {
+                const wantHD = confirm('Unduh PDF versi HD (±1,2 GB)?\n\nOK = HD (besar, sebaiknya pakai Wi-Fi)\nBatal = versi ringan (±5 MB)');
                 const a = document.createElement('a');
-                a.href = PDF_DOWNLOAD_URL;
+                a.href = wantHD ? PDF_DOWNLOAD_URL : PDF_LIGHT_URL;
                 a.download = 'Buku-Angkatan-Ksatiara-12.pdf';
                 document.body.appendChild(a);
                 a.click();
