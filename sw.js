@@ -1,6 +1,6 @@
-// Naikkan angka versi ini (v6 -> v7 dst.) setiap kali mengganti PDF/musik/logo/ikon
+// Naikkan angka versi ini (v7 -> v8 dst.) setiap kali mengganti PDF/musik/logo/ikon
 // dengan nama file yang sama, supaya pengunjung mendapat versi terbaru.
-const CACHE_NAME = 'ksatiara-pwa-v6';
+const CACHE_NAME = 'ksatiara-pwa-v7';
 
 // File kecil dulu (cepat), file besar belakangan satu per satu agar tidak berebut kecepatan unduh
 const SMALL_ASSETS = [
