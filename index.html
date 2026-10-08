@@ -1272,7 +1272,9 @@
 
                 const renderPage = async (idx) => {
                     const targetW = desiredWidth(idx);
-                    const wantHD = targetW > TARGET_WIDTH + 8 && !hdMissing.has(idx);
+                    // HD dipakai untuk halaman yang sedang tampil begitu buku di-zoom (tombol zoom maupun cubit)
+                    const zoomedHere = currentZoom > 1.3 && spreadPages(spreadStart(currentIdx())).includes(idx);
+                    const wantHD = zoomedHere && !hdMissing.has(idx);
                     const cur = renderedWidth.get(idx);
                     if (rendering.has(idx)) return false;
                     if (wantHD ? hdDone.has(idx) : (cur && !hdDone.has(idx) && Math.abs(cur - targetW) < 8)) return false;
