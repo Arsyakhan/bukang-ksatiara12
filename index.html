@@ -544,7 +544,7 @@
 
        document.addEventListener("DOMContentLoaded", async () => {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-            const pdfUrl = 'bukang_compressed.pdf'; // PDF ringan (±5 MB) untuk membaca buku, dilayani langsung oleh Vercel
+            const pdfUrl = 'bukang_compressed.pdf'; // PDF ringan (±24 MB) untuk membaca buku, dilayani langsung oleh Vercel
             const PDF_LIGHT_URL = 'bukang_compressed.pdf'; // versi ringan untuk diunduh
             const PDF_DOWNLOAD_URL = 'https://github.com/Arsyakhan/bukang-ksatiara12/releases/download/Bukang/BUKU.ANGKATAN.FIX.NO.DEBAT.pdf'; // PDF HD (±1,2 GB) untuk diunduh, dilayani GitHub Releases
             const BOOK_TITLE = 'Buku Angkatan Ksatiara 12';
@@ -920,7 +920,7 @@
 
             // ---------- UNDUH PDF ----------
             pdfBtn.addEventListener('click', () => {
-                const wantHD = confirm('Unduh PDF versi HD (±1,2 GB)?\n\nOK = HD (besar, sebaiknya pakai Wi-Fi)\nBatal = versi ringan (±5 MB)');
+                const wantHD = confirm('Unduh PDF versi HD (±1,2 GB)?\n\nOK = HD (besar, sebaiknya pakai Wi-Fi)\nBatal = versi ringan (±24 MB)');
                 const a = document.createElement('a');
                 a.href = wantHD ? PDF_DOWNLOAD_URL : PDF_LIGHT_URL;
                 a.download = 'Buku-Angkatan-Ksatiara-12.pdf';
