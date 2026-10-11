@@ -56,10 +56,12 @@ pdftoppm -jpeg -jpegopt quality=85 -scale-to-x 2000 -scale-to-y -1 BUKU.pdf hd/p
 
 Hasilnya `hd/p-01.jpg` … `hd/p-48.jpg` dengan lebar 2000 px. Kalau satu gambar HD tidak ada, buku otomatis memakai render PDF untuk halaman itu: tetap tampil, hanya lebih buram saat di-zoom.
 
+**Kalau desain satu halaman diperbaiki**, ganti dua tempat sekaligus: `hd/p-NN.jpg` (dipakai saat zoom dan saat menyimpan gambar) *dan* halaman yang sama di `bukang_compressed.pdf` (dipakai di tampilan normal, mode offline, dan unduhan "PDF ringan"). Kalau hanya gambar HD yang diganti, desain lama tetap terlihat di tampilan normal. Setelah itu naikkan `CACHE_NAME` (lihat bagian berikutnya). PDF HD di GitHub Releases juga perlu diganti kalau ingin unduhannya ikut diperbaiki.
+
 ## Aturan cache (penting)
 
 `sw.js` menyimpan PDF, musik, logo, ikon, dan gambar HD dengan strategi *cache dulu*, sedangkan `index.html` selalu diambil dari internet dulu. Jadi:
 
 - **Mengubah `index.html`**: pengunjung langsung mendapat versi baru, tidak perlu apa-apa.
 - **Menambah berkas baru** (mis. gambar HD yang sebelumnya belum ada): tidak perlu apa-apa.
-- **Mengganti isi berkas yang namanya sama** (PDF, musik, logo, ikon, atau gambar HD): naikkan `CACHE_NAME` di `sw.js` (`v8` → `v9`, dst.) supaya pengunjung yang sudah menyimpan versi lama mendapat yang baru. Pengunjung lalu mengunduh ulang PDF dan musik (±30 MB), jadi lakukan seperlunya saja.
+- **Mengganti isi berkas yang namanya sama** (PDF, musik, logo, ikon, atau gambar HD): naikkan `CACHE_NAME` di `sw.js` (mis. `v9` → `v10`) supaya pengunjung yang sudah menyimpan versi lama mendapat yang baru. Pengunjung lalu mengunduh ulang PDF dan musik (±30 MB), jadi lakukan seperlunya saja.
