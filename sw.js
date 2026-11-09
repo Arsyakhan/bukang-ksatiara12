@@ -1,6 +1,8 @@
-// Naikkan angka versi ini (v9 -> v10 dst.) setiap kali mengganti PDF/musik/logo/ikon/gambar HD
+// Naikkan angka versi ini (10 -> 11 dst.) setiap kali mengganti PDF/musik/logo/ikon/gambar HD
 // dengan nama file yang sama, supaya pengunjung mendapat versi terbaru.
-const CACHE_NAME = 'ksatiara-pwa-v10';
+// Kalau yang diganti PDF atau gambar HD, samakan juga ASSET_VERSION di index.html.
+const ASSET_VERSION = '10';
+const CACHE_NAME = 'ksatiara-pwa-v' + ASSET_VERSION;
 
 // File kecil dulu (cepat), file besar belakangan satu per satu agar tidak berebut kecepatan unduh
 const SMALL_ASSETS = [
@@ -15,7 +17,7 @@ const SMALL_ASSETS = [
   './flip.mp3'
 ];
 const BIG_ASSETS = [
-  './bukang_compressed.pdf',
+  './bukang_compressed.pdf?v=' + ASSET_VERSION, // harus sama dengan PDF_FILE di index.html
   './music.mp3'
 ];
 

@@ -56,7 +56,7 @@ pdftoppm -jpeg -jpegopt quality=85 -scale-to-x 2000 -scale-to-y -1 BUKU.pdf hd/p
 
 Hasilnya `hd/p-01.jpg` … `hd/p-48.jpg` dengan lebar 2000 px. Kalau satu gambar HD tidak ada, buku otomatis memakai render PDF untuk halaman itu: tetap tampil, hanya lebih buram saat di-zoom.
 
-**Kalau desain satu halaman diperbaiki**, ganti dua tempat sekaligus: `hd/p-NN.jpg` (dipakai saat zoom dan saat menyimpan gambar) *dan* halaman yang sama di `bukang_compressed.pdf` (dipakai di tampilan normal, mode offline, dan unduhan "PDF ringan"). Kalau hanya gambar HD yang diganti, desain lama tetap terlihat di tampilan normal. Setelah itu naikkan `CACHE_NAME` (lihat bagian berikutnya). PDF HD di GitHub Releases juga perlu diganti kalau ingin unduhannya ikut diperbaiki.
+**Kalau desain satu halaman diperbaiki**, ganti dua tempat sekaligus: `hd/p-NN.jpg` (dipakai saat zoom dan saat menyimpan gambar) *dan* halaman yang sama di `bukang_compressed.pdf` (dipakai di tampilan normal, mode offline, dan unduhan "PDF ringan"). Kalau hanya gambar HD yang diganti, desain lama tetap terlihat di tampilan normal. Setelah itu naikkan `ASSET_VERSION` (lihat bagian berikutnya). PDF HD di GitHub Releases juga perlu diganti kalau ingin unduhannya ikut diperbaiki.
 
 ## Aturan cache (penting)
 
@@ -64,4 +64,5 @@ Hasilnya `hd/p-01.jpg` … `hd/p-48.jpg` dengan lebar 2000 px. Kalau satu gambar
 
 - **Mengubah `index.html`**: pengunjung langsung mendapat versi baru, tidak perlu apa-apa.
 - **Menambah berkas baru** (mis. gambar HD yang sebelumnya belum ada): tidak perlu apa-apa.
-- **Mengganti isi berkas yang namanya sama** (PDF, musik, logo, ikon, atau gambar HD): naikkan `CACHE_NAME` di `sw.js` (mis. `v9` → `v10`) supaya pengunjung yang sudah menyimpan versi lama mendapat yang baru. Pengunjung lalu mengunduh ulang PDF dan musik (±30 MB), jadi lakukan seperlunya saja.
+- **Mengganti isi berkas yang namanya sama** (PDF, musik, logo, ikon, atau gambar HD): naikkan `ASSET_VERSION` di `sw.js` (mis. `'10'` → `'11'`; nama cache ikut berubah) supaya pengunjung yang sudah menyimpan versi lama mendapat yang baru. Pengunjung lalu mengunduh ulang PDF dan musik (±30 MB), jadi lakukan seperlunya saja.
+- **Kalau yang diganti PDF atau gambar HD**, naikkan juga `ASSET_VERSION` di `index.html` ke angka yang sama. PDF dan gambar HD dipanggil dengan alamat berversi (`bukang_compressed.pdf?v=10`, `hd/p-16.jpg?v=10`), jadi begitu situs dibuka, file baru langsung diambil dari internet. Tanpa ini, pengunjung lama tetap melihat dan mengunduh PDF lama sampai cache baru selesai diunduh di latar belakang (bisa lama di HP).

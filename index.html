@@ -701,6 +701,12 @@
     <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
 
     <script>
+        // Versi isi buku. Naikkan bersama ASSET_VERSION di sw.js setiap kali PDF atau gambar HD diganti
+        // dengan nama file yang sama. Alamatnya jadi berubah (?v=...), jadi browser langsung mengambil file
+        // baru dari internet, tidak memakai salinan lama di cache.
+        const ASSET_VERSION = '10';
+        const PDF_FILE = 'bukang_compressed.pdf?v=' + ASSET_VERSION;
+
         // Layar galat yang ramah (pengganti layar loading yang menggantung selamanya)
         // dengan tombol "Muat ulang" dan jalan keluar berupa unduhan PDF.
         function showFatal(title, detail) {
@@ -715,7 +721,7 @@
                 '<p>' + detail + '</p>' +
                 '<div class="fatal-actions">' +
                 '<button class="wide-btn" id="fatal-retry"><i class="fa-solid fa-rotate-right"></i> Muat ulang</button>' +
-                '<a class="fatal-link" href="bukang_compressed.pdf" download="Buku-Angkatan-Ksatiara-12.pdf"><i class="fa-solid fa-download"></i> Unduh PDF saja</a>' +
+                '<a class="fatal-link" href="' + PDF_FILE + '" download="Buku-Angkatan-Ksatiara-12.pdf"><i class="fa-solid fa-download"></i> Unduh PDF saja</a>' +
                 '</div></div>';
             document.getElementById('fatal-retry').addEventListener('click', () => location.reload());
         }
@@ -744,6 +750,8 @@
         window.addEventListener('load', () => setTimeout(registerServiceWorker, 15000)); // jaring pengaman
 
        document.addEventListener("DOMContentLoaded", async () => {
+            // Tautan unduh PDF di HTML memakai alamat berversi (lihat ASSET_VERSION)
+            document.querySelectorAll('a[href="bukang_compressed.pdf"]').forEach((a) => { a.href = PDF_FILE; });
             // Pustaka dari CDN (pdf.js / page-flip) gagal dimuat, misalnya saat offline atau diblokir jaringan.
             // Tanpa pengecekan ini layar loading menggantung selamanya dan semua tombol mati.
             if (typeof pdfjsLib === 'undefined' || typeof St === 'undefined') {
@@ -752,8 +760,8 @@
                 return;
             }
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-            const pdfUrl = 'bukang_compressed.pdf'; // PDF ringan (±22 MB) untuk membaca buku, dilayani langsung oleh Vercel
-            const PDF_LIGHT_URL = 'bukang_compressed.pdf'; // versi ringan untuk diunduh
+            const pdfUrl = PDF_FILE; // PDF ringan (±22 MB) untuk membaca buku, dilayani langsung oleh Vercel
+            const PDF_LIGHT_URL = PDF_FILE; // versi ringan untuk diunduh
             const PDF_DOWNLOAD_URL = 'https://github.com/Arsyakhan/bukang-ksatiara12/releases/download/Bukang/BUKU.ANGKATAN.FIX.NO.DEBAT.pdf'; // PDF HD (±1,2 GB) untuk diunduh, dilayani GitHub Releases
             const BOOK_TITLE = 'Buku Angkatan Ksatiara 12';
 
@@ -1557,7 +1565,7 @@
                 // Gambar HD per halaman: hanya diunduh untuk halaman yang sedang di-zoom
                 const hdDone = new Set();     // halaman yang canvas-nya sekarang berisi gambar HD
                 const hdMissing = new Set();  // halaman yang gambar HD-nya tidak ada (pakai PDF saja)
-                const hdName = (idx) => HD_DIR + HD_PREFIX + String(idx + 1).padStart(String(totalPages).length, '0') + '.jpg';
+                const hdName = (idx) => HD_DIR + HD_PREFIX + String(idx + 1).padStart(String(totalPages).length, '0') + '.jpg?v=' + ASSET_VERSION;
                 const loadHD = (idx) => new Promise((resolve) => {
                     if (hdMissing.has(idx)) return resolve(null);
                     const img = new Image();
